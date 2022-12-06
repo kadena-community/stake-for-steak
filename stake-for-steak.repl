@@ -52,9 +52,8 @@
 (env-data {})
 (env-keys [])
 
-(env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })
-
 ; Test creation of a stake
+(env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })
 (env-sigs [{
   "key": "stake-owner-public-key",
   "caps": [
@@ -80,19 +79,22 @@
 (env-sigs [])
 
 ; Test that the escrow account can't be plundered by the owner
-; TODO implement custom guard
-; (env-sigs [{
-;   "key": "stake-owner-public-key",
-;   "caps": [
-;     (coin.TRANSFER "stake-owner-tulsi-stake" "stake-owner" 50.0)
-;   ]
-; }])
-; (begin-tx)
-; (coin.transfer "stake-owner-tulsi-stake" "stake-owner" 50.0)
-; ; (expect-failure "Stake escrow account can't be plundered by the owner" "Guard")
-; (commit-tx)
+(env-sigs [{
+  "key": "stake-owner-public-key",
+  "caps": [
+    (coin.TRANSFER "stake-owner-tulsi-stake" "stake-owner" 50.0)
+  ]
+}])
+(begin-tx)
+(expect-failure
+  "Stake escrow account can't be plundered by the owner"
+  "require-capability: not granted"
+  (coin.transfer "stake-owner-tulsi-stake" "stake-owner" 50.0))
+(commit-tx)
+(env-sigs [])
+(env-data {})
 
-; Test creation of a stake
+; Test funding of a stake
 (env-data {
   "staker-keyset": {
     "keys": [
@@ -133,3 +135,62 @@
 (commit-tx)
 (env-data {})
 (env-sigs [])
+
+; Test refunding a stake
+(env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })
+(env-sigs [{
+  "key": "stake-owner-public-key",
+  "caps": [
+    (coin.TRANSFER "stake-owner" "stake-owner-refund-stake" 50.0)
+  ]
+}])
+(begin-tx)
+(free.stake-for-steak.create-stake "refund-stake" "tulsi-account" "stake-owner" (read-keyset "stake-owner-keyset") 50.0)
+(commit-tx)
+(env-sigs [])
+(env-data {})
+
+; Add additional funds from another account
+(env-data {
+  "staker-keyset": {
+    "keys": [
+      "staker-public-key"
+    ],
+    "pred": "keys-all"
+  }
+})
+(env-sigs [{
+  "key": "staker-public-key",
+  "caps": [
+    (coin.TRANSFER "staker" "stake-owner-refund-stake" 50.0)
+  ]
+}])
+(begin-tx)
+(free.stake-for-steak.fund-stake "refund-stake" "staker" (read-keyset "staker-keyset"))
+(commit-tx)
+(env-sigs [])
+(env-data {})
+
+; Could this be more elegant?
+(env-sigs [{
+  "key": "stake-owner-public-key",
+  "caps": [
+    (coin.TRANSFER "stake-owner-refund-stake" "stake-owner" 50.0)
+    (coin.TRANSFER "stake-owner-refund-stake" "staker" 50.0)
+  ]
+}])
+(begin-tx)
+(free.stake-for-steak.refund-stake "refund-stake")
+(expect
+  "Stake to be refunded"
+  { "name"     : "refund-stake"
+  , "merchant" : "tulsi-account"
+  , "owner"    : "stake-owner"
+  , "stake"    : 50.0
+  , "balance"  : 0.0 }
+  (free.stake-for-steak.get-stake "refund-stake"))
+(expect
+  "Stakers to be reset to 0.0"
+  []
+  (free.stake-for-steak.get-stakers "refund-stake"))
+(commit-tx)

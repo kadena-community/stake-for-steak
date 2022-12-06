@@ -6,6 +6,9 @@
   (defcap GOVERNANCE ()
     (enforce-guard (read-keyset "free.stake-for-steak-keyset")))
 
+  (defcap STAKE_FOR_STEAK ()
+    true)
+
   (use coin)
 
   ; Schema for the stake
@@ -33,8 +36,11 @@
   (deftable stakers-table:{stakers})
 
   (defun stake-guard:bool (owner-guard:guard)
-    ; (enforce-keyset (read-keyset "free.stake-for-steak-keyset"))
+    (require-capability (STAKE_FOR_STEAK))
     (enforce-guard owner-guard))
+
+  (defun create-stake-guard(owner-guard:guard)
+    (create-user-guard (stake-guard owner-guard)))
 
   (defun create-stake(name:string
                       merchant:string
@@ -42,7 +48,7 @@
                       owner-guard:guard
                       stake:decimal)
     (let ((stake-escrow (format "{}-{}" [owner name])))
-      (create-account stake-escrow (create-user-guard (stake-guard owner-guard)))
+      (create-account stake-escrow (create-stake-guard owner-guard))
       (insert stake-table name {
         "merchant"    : merchant,
         "owner"       : owner,
@@ -101,6 +107,21 @@
         , "stake"  : (at 'stake staker)
         , "amount" : (at 'amount staker) })))
       (fold-db stakers-table query mapper)))
+
+  (defun refund-stake(name:string)
+    (with-capability (STAKE_FOR_STEAK)
+      (with-read stake-table name
+        { "owner" := owner
+        , "balance" := balance }
+        (let ((stake-escrow (format "{}-{}" [owner name])))
+          (map
+            (lambda (staker)
+              (coin.transfer stake-escrow (at 'staker staker) (at 'amount staker))
+              (update stakers-table (format "{}-{}" [(at 'staker staker) name])
+                { "amount" : 0.0 }))
+            (get-stakers name))
+          (update stake-table name
+            { "balance" : 0.0 })))))
 )
 
 (create-table stake-table)

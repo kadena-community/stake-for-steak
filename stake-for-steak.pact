@@ -26,8 +26,7 @@
   ; Key of the table will consist of {stake-name}-{staker}
   (defschema stakers
     ; The amount staked
-    amount:decimal
-    guard:guard)
+    amount:decimal)
   (deftable stakers-table:{stakers})
 
   (defun stake-guard:bool (owner-guard:guard)
@@ -61,6 +60,19 @@
       , "owner"    : owner
       , "stake"    : stake
       , "balance"  : balance }))
+
+  (defun fund-stake(name:string staker:string)
+    (with-read stake-table name
+      { "owner"       := owner
+      , "stake"       := stake
+      , "balance"     := balance }
+      (let ((stake-escrow (format "{}-{}" [owner name])))
+        (coin.transfer staker stake-escrow stake)
+        (update stake-table name 
+          { "balance" : (+ balance stake) })
+        (insert stakers-table (format "{}-{}" [staker name]) {
+          "amount" : stake
+        }))))
 )
 
 (create-table stake-table)

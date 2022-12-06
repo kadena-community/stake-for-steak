@@ -39,11 +39,15 @@
 (commit-tx)
 
 ; Setup stake-owner-initial-balance
-(env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })
-(env-keys ["stake-owner-public-key"])
+(env-data { 
+ "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" }, 
+ "staker-keyset": { "keys": [ "staker-public-key" ], "pred": "keys-all" }
+})
+(env-keys ["stake-owner-public-key", "staker-public-key"])
 (begin-tx)
 (test-capability (coin.COINBASE))
 (coin.coinbase "stake-owner" (read-keyset "stake-owner-keyset") 100.0)
+(coin.coinbase "staker" (read-keyset "staker-keyset") 100.0)
 (commit-tx)
 (env-data {})
 (env-keys [])
@@ -87,4 +91,29 @@
 ; (coin.transfer "stake-owner-tulsi-stake" "stake-owner" 50.0)
 ; ; (expect-failure "Stake escrow account can't be plundered by the owner" "Guard")
 ; (commit-tx)
+
+; Test creation of a stake
+(env-sigs [{
+  "key": "staker-public-key",
+  "caps": [
+    (coin.TRANSFER "staker" "stake-owner-tulsi-stake" 50.0)
+  ]
+}])
+(begin-tx)
+(free.stake-for-steak.fund-stake "tulsi-stake" "staker")
+(expect 
+  "Stake to be created"
+  (free.stake-for-steak.get-stake "tulsi-stake")
+  { "name"     : "tulsi-stake"
+  , "merchant" : "tulsi-account"
+  , "owner"    : "stake-owner"
+  , "stake"    : 50.0
+  , "balance"  : 100.0 })
+(expect
+  "Stake escrow to have 100.0 coins"
+  (coin.get-balance "stake-owner-tulsi-stake")
+  100.0)
+(commit-tx)
+(env-data {})
+(env-sigs [])
 

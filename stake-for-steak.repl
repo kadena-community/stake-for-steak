@@ -33,3 +33,20 @@
 (load "stake-for-steak.pact")
 (commit-tx)
 
+(env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })
+
+; Test creation of a stake
+(env-keys ["stake-owner-public-key"])
+(begin-tx)
+(free.stake-for-steak.create-stake "tulsi-stake" "tulsi-account" "stake-owner" (read-keyset "stake-owner-keyset") 50.0)
+(expect 
+  "Stake to be created"
+  (free.stake-for-steak.get-stake "tulsi-stake")
+  { "name"     : "tulsi-stake"
+  , "merchant" : "tulsi-account"
+  , "owner"    : "stake-owner"
+  , "stake"    : 50.0
+  , "balance"  : 0.0 })
+(commit-tx)
+(env-data {})
+(env-sigs [])

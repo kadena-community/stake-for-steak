@@ -74,3 +74,17 @@
 (commit-tx)
 (env-data {})
 (env-sigs [])
+
+; Test that the escrow account can't be plundered by the owner
+; TODO implement custom guard
+; (env-sigs [{
+;   "key": "stake-owner-public-key",
+;   "caps": [
+;     (coin.TRANSFER "stake-owner-tulsi-stake" "stake-owner" 50.0)
+;   ]
+; }])
+; (begin-tx)
+; (coin.transfer "stake-owner-tulsi-stake" "stake-owner" 50.0)
+; ; (expect-failure "Stake escrow account can't be plundered by the owner" "Guard")
+; (commit-tx)
+

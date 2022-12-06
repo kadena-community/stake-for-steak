@@ -30,13 +30,17 @@
     guard:guard)
   (deftable stakers-table:{stakers})
 
+  (defun stake-guard:bool (owner-guard:guard)
+    ; (enforce-keyset (read-keyset "free.stake-for-steak-keyset"))
+    (enforce-guard owner-guard))
+
   (defun create-stake(name:string
                       merchant:string
                       owner:string
                       owner-guard:guard
                       stake:decimal)
     (let ((stake-escrow (format "{}-{}" [owner name])))
-      (create-account stake-escrow owner-guard)
+      (create-account stake-escrow (create-user-guard (stake-guard owner-guard)))
       (transfer owner stake-escrow stake)
       (insert stake-table name {
         "merchant"    : merchant,

@@ -1,0 +1,35 @@
+; Setup KeySets to define a namespace
+(env-data {
+  "namespace-keyset": {
+    "keys": [],
+    "pred": "keys-all"
+  },
+  "test-keyset": {
+    "keys": [],
+    "pred": "keys-all"
+  }
+})
+
+; Setup namespace
+(begin-tx)
+(define-namespace "free" (read-keyset "test-keyset") (read-keyset "namespace-keyset"))
+(commit-tx)
+
+(env-data {
+ "stake-for-steak-keyset": {
+   "keys": [
+     "stake-for-steak-public-key"
+   ],
+   "pred": "keys-all"
+ }
+})
+
+(env-sigs [{
+  "key": "stake-for-steak-public-key",
+  "caps": []
+}])
+
+(begin-tx)
+(load "stake-for-steak.pact")
+(commit-tx)
+

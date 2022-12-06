@@ -6,6 +6,8 @@
   (defcap GOVERNANCE ()
     (enforce-guard (read-keyset "free.stake-for-steak-keyset")))
 
+  (use coin)
+
   ; Schema for the stake
   (defschema stake
     ; Account to credit for this stake
@@ -33,13 +35,16 @@
                       owner:string
                       owner-guard:guard
                       stake:decimal)
-    (insert stake-table name {
-      "merchant"    : merchant,
-      "owner"       : owner,
-      "owner-guard" : owner-guard,
-      "stake"       : stake,
-      "balance"     : 0.0
-    }))
+    (let ((stake-escrow (format "{}-{}" [owner name])))
+      (create-account stake-escrow owner-guard)
+      (transfer owner stake-escrow stake)
+      (insert stake-table name {
+        "merchant"    : merchant,
+        "owner"       : owner,
+        "owner-guard" : owner-guard,
+        "stake"       : stake,
+        "balance"     : stake
+      })))
   
   (defun get-stake(name:string)
     (with-read stake-table name 

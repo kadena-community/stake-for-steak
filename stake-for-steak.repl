@@ -30,13 +30,33 @@
 }])
 
 (begin-tx)
+(load "root/fungible-v2.pact")
+(load "root/fungible-xchain-v1.pact")
+(load "root/coin-v5.pact")
 (load "stake-for-steak.pact")
+(create-table coin.coin-table)
+(create-table coin.allocation-table)
 (commit-tx)
+
+; Setup stake-owner-initial-balance
+(env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })
+(env-keys ["stake-owner-public-key"])
+(begin-tx)
+(test-capability (coin.COINBASE))
+(coin.coinbase "stake-owner" (read-keyset "stake-owner-keyset") 100.0)
+(commit-tx)
+(env-data {})
+(env-keys [])
 
 (env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })
 
 ; Test creation of a stake
-(env-keys ["stake-owner-public-key"])
+(env-sigs [{
+  "key": "stake-owner-public-key",
+  "caps": [
+    (coin.TRANSFER "stake-owner" "stake-owner-tulsi-stake" 50.0)
+  ]
+}])
 (begin-tx)
 (free.stake-for-steak.create-stake "tulsi-stake" "tulsi-account" "stake-owner" (read-keyset "stake-owner-keyset") 50.0)
 (expect 
@@ -46,7 +66,11 @@
   , "merchant" : "tulsi-account"
   , "owner"    : "stake-owner"
   , "stake"    : 50.0
-  , "balance"  : 0.0 })
+  , "balance"  : 50.0 })
+(expect
+  "Stake escrow to have 50.0 coins"
+  (coin.get-balance "stake-owner-tulsi-stake")
+  50.0)
 (commit-tx)
 (env-data {})
 (env-sigs [])

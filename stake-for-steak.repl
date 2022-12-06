@@ -39,8 +39,8 @@
 (commit-tx)
 
 ; Setup stake-owner-initial-balance
-(env-data { 
- "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" }, 
+(env-data {
+ "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" },
  "staker-keyset": { "keys": [ "staker-public-key" ], "pred": "keys-all" }
 })
 (env-keys ["stake-owner-public-key", "staker-public-key"])
@@ -63,18 +63,18 @@
 }])
 (begin-tx)
 (free.stake-for-steak.create-stake "tulsi-stake" "tulsi-account" "stake-owner" (read-keyset "stake-owner-keyset") 50.0)
-(expect 
+(expect
   "Stake to be created"
-  (free.stake-for-steak.get-stake "tulsi-stake")
   { "name"     : "tulsi-stake"
   , "merchant" : "tulsi-account"
   , "owner"    : "stake-owner"
   , "stake"    : 50.0
-  , "balance"  : 50.0 })
+  , "balance"  : 50.0 }
+  (free.stake-for-steak.get-stake "tulsi-stake"))
 (expect
   "Stake escrow to have 50.0 coins"
-  (coin.get-balance "stake-owner-tulsi-stake")
-  50.0)
+  50.0
+  (coin.get-balance "stake-owner-tulsi-stake"))
 (commit-tx)
 (env-data {})
 (env-sigs [])
@@ -93,6 +93,14 @@
 ; (commit-tx)
 
 ; Test creation of a stake
+(env-data {
+  "staker-keyset": {
+    "keys": [
+      "staker-public-key"
+    ],
+    "pred": "keys-all"
+  }
+})
 (env-sigs [{
   "key": "staker-public-key",
   "caps": [
@@ -100,20 +108,28 @@
   ]
 }])
 (begin-tx)
-(free.stake-for-steak.fund-stake "tulsi-stake" "staker")
-(expect 
+(free.stake-for-steak.fund-stake "tulsi-stake" "staker" (read-keyset "staker-keyset"))
+(expect
   "Stake to be created"
-  (free.stake-for-steak.get-stake "tulsi-stake")
   { "name"     : "tulsi-stake"
   , "merchant" : "tulsi-account"
   , "owner"    : "stake-owner"
   , "stake"    : 50.0
-  , "balance"  : 100.0 })
+  , "balance"  : 100.0 }
+  (free.stake-for-steak.get-stake "tulsi-stake"))
 (expect
   "Stake escrow to have 100.0 coins"
-  (coin.get-balance "stake-owner-tulsi-stake")
-  100.0)
+  100.0
+  (coin.get-balance "stake-owner-tulsi-stake"))
 (commit-tx)
 (env-data {})
 (env-sigs [])
 
+(begin-tx)
+(expect
+  "Receive a list of stakers"
+  [{ "staker": "stake-owner", "amount": 50.0 }, { "staker": "staker", "amount": 50.0 }]
+  (map (lambda (staker) { "staker": (at 'staker staker) , "amount": 50.0 }) (free.stake-for-steak.get-stakers "tulsi-stake")))
+(commit-tx)
+(env-data {})
+(env-sigs [])

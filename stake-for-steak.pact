@@ -12,7 +12,7 @@
   (use coin)
 
   ; Schema for the stake
-  (defschema stake
+  (defschema stake-schema
     ; Account to credit for this stake
     merchant:string
     ; Owner of the stake
@@ -23,17 +23,17 @@
     stake:decimal
     ; The balance of the stake
     balance:decimal)
-  (deftable stake-table:{stake})
+  (deftable stake-table:{stake-schema})
 
   ; Schema for the stakers
   ; Key of the table will consist of {stake-name}-{staker}
-  (defschema stakers
+  (defschema stakers-schema
     stake:string
     staker:string
     ; The amount staked
     amount:decimal
     guard:guard)
-  (deftable stakers-table:{stakers})
+  (deftable stakers-table:{stakers-schema})
 
   (defun stake-guard:bool (owner-guard:guard)
     (require-capability (STAKE_FOR_STEAK))
@@ -103,6 +103,12 @@
         (where 'stake (= name))
         (where 'amount (!= 0.0)))))
 
+  (defun refund-staker(name:string stake-escrow:string staker:object{stakers-schema})
+    (require-capability (STAKE_FOR_STEAK))
+    (coin.transfer stake-escrow (at 'staker staker) (at 'amount staker))
+    (update stakers-table (format "{}-{}" [(at 'staker staker) name])
+      { "amount" : 0.0 }))
+
   (defun refund-stake(name:string)
     (with-capability (STAKE_FOR_STEAK)
       (with-read stake-table name
@@ -110,10 +116,7 @@
         , "balance" := balance }
         (let ((stake-escrow (format "{}-{}" [owner name])))
           (map
-            (lambda (staker)
-              (coin.transfer stake-escrow (at 'staker staker) (at 'amount staker))
-              (update stakers-table (format "{}-{}" [(at 'staker staker) name])
-                { "amount" : 0.0 }))
+            (refund-staker name stake-escrow)
             (get-stakers name))
           (update stake-table name
             { "balance" : 0.0 })))))

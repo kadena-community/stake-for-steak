@@ -97,16 +97,11 @@
           { "balance" : 0.0 }))))
 
   (defun get-stakers(name:string)
-    (let ((query (lambda (key staker)
-      (fold (and) true [
-        (= (at 'stake staker) name)
-        (> (at 'amount staker) 0.0)
-      ])))
-      (mapper (lambda (key staker)
-        { "staker" : (at 'staker staker)
-        , "stake"  : (at 'stake staker)
-        , "amount" : (at 'amount staker) })))
-      (fold-db stakers-table query mapper)))
+    (select stakers-table 
+      ['staker 'stake 'amount] 
+      (and? 
+        (where 'stake (= name))
+        (where 'amount (!= 0.0)))))
 
   (defun refund-stake(name:string)
     (with-capability (STAKE_FOR_STEAK)

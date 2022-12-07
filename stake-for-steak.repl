@@ -39,6 +39,7 @@
 (commit-tx)
 
 (typecheck "free.stake-for-steak")
+(verify "free.stake-for-steak")
 
 ; Setup stake-owner-initial-balance
 (env-data {

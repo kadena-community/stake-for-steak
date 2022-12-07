@@ -99,12 +99,18 @@
   (defun get-stake-id(stake:string staker:string)
     (format "{}-{}" [staker stake]))
 
+
+  ; TODO: remove this for actual implementation, only mocked so we can do formal verification
   (defun get-stakers(name:string)
-    (select stakers-table 
-      ['staker 'stake 'amount] 
-      (and? 
-        (where 'stake (= name))
-        (where 'amount (!= 0.0)))))
+    (let ((stake-owner (read stakers-table (get-stake-id name "stake-owner")))
+         (staker (read stakers-table (get-stake-id name "staker"))))
+      (filter (where 'amount (!= 0.0)) [stake-owner staker])))
+  ; (defun get-stakers(name:string)
+  ;   (select stakers-table 
+  ;     ['staker 'stake 'amount] 
+  ;     (and? 
+  ;       (where 'stake (= name))
+  ;       (where 'amount (!= 0.0)))))
 
   (defun refund-staker(name:string stake-escrow:string staker:object{stakers-schema})
     (require-capability (STAKE_FOR_STEAK))

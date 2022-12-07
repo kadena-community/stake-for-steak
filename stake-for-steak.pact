@@ -39,7 +39,7 @@
     (require-capability (STAKE_FOR_STEAK))
     (enforce-guard owner-guard))
 
-  (defun create-stake-guard(owner-guard:guard)
+  (defun create-stake-guard:guard(owner-guard:guard)
     (create-user-guard (stake-guard owner-guard)))
 
   (defun create-stake(name:string
@@ -94,7 +94,7 @@
       (let ((stake-escrow (format "{}-{}" [owner name])))
         (coin.transfer stake-escrow merchant balance)
         (update stakers-table name
-          { "balance" : 0.0 }))))
+          { "amount" : 0.0 }))))
 
   (defun get-stakers(name:string)
     (select stakers-table 

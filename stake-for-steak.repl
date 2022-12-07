@@ -38,6 +38,8 @@
 (create-table coin.allocation-table)
 (commit-tx)
 
+(verify "free.stake-for-steak")
+
 ; Setup stake-owner-initial-balance
 (env-data {
  "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" },

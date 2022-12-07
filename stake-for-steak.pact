@@ -47,6 +47,18 @@
                       owner:string
                       owner-guard:guard
                       stake:decimal)
+    @doc "Create a stake where all stakers know where the destination would go to"
+    @model [
+      (property (> stake 0.0))
+      (property (!= name ""))
+      (property (!= merchant ""))
+      (property (!= owner ""))
+    ]
+
+    (enforce (> stake 0.0) "Stake must be greater than 0.0")
+    (enforce (!= name "") "Name must not be empty")
+    (enforce (!= merchant "") "Merchant must not be empty")
+
     (let ((stake-escrow:string (get-stake-id name owner)))
       (create-account stake-escrow (create-stake-guard owner-guard))
       (insert stake-table name {

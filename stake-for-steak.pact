@@ -47,7 +47,7 @@
                       owner:string
                       owner-guard:guard
                       stake:decimal)
-    (let ((stake-escrow (format "{}-{}" [owner name])))
+    (let ((stake-escrow:string (get-stake-id name owner)))
       (create-account stake-escrow (create-stake-guard owner-guard))
       (insert stake-table name {
         "merchant"    : merchant,
@@ -75,11 +75,11 @@
       { "owner"       := owner
       , "stake"       := stake
       , "balance"     := balance }
-      (let ((stake-escrow (format "{}-{}" [owner name])))
+      (let ((stake-escrow:string (get-stake-id name owner)))
         (coin.transfer staker stake-escrow stake)
         (update stake-table name
           { "balance" : (+ balance stake) })
-        (insert stakers-table (format "{}-{}" [staker name])
+        (insert stakers-table (get-stake-id name staker)
           { "amount" : stake
           , "stake"  : name
           , "staker" : staker
@@ -91,10 +91,13 @@
       , "owner"       := owner
       , "owner-guard" := owner-guard
       , "balance"     := balance }
-      (let ((stake-escrow (format "{}-{}" [owner name])))
+      (let ((stake-escrow:string (get-stake-id name owner name)))
         (coin.transfer stake-escrow merchant balance)
         (update stakers-table name
           { "amount" : 0.0 }))))
+
+  (defun get-stake-id(stake:string staker:string)
+    (format "{}-{}" [staker stake]))
 
   (defun get-stakers(name:string)
     (select stakers-table 
@@ -106,7 +109,7 @@
   (defun refund-staker(name:string stake-escrow:string staker:object{stakers-schema})
     (require-capability (STAKE_FOR_STEAK))
     (coin.transfer stake-escrow (at 'staker staker) (at 'amount staker))
-    (update stakers-table (format "{}-{}" [(at 'staker staker) name])
+    (update stakers-table (get-stake-id name (at 'staker staker))
       { "amount" : 0.0 }))
 
   (defun refund-stake(name:string)
@@ -114,12 +117,26 @@
       (with-read stake-table name
         { "owner" := owner
         , "balance" := balance }
-        (let ((stake-escrow (format "{}-{}" [owner name])))
+        (let ((stake-escrow:string (get-stake-id name owner)))
           (map
             (refund-staker name stake-escrow)
             (get-stakers name))
           (update stake-table name
             { "balance" : 0.0 })))))
+
+  (defun withdraw(name:string staker:string)
+    (with-capability (STAKE_FOR_STEAK)
+      (with-read stakers-table (get-stake-id name staker)
+        { "amount" := amount }
+        (with-read stake-table name
+          { "balance" := balance
+          , "owner"   := owner }
+          (let ((stake-escrow:string (get-stake-id name owner)))
+            (coin.transfer stake-escrow staker amount)
+            (update stakers-table (get-stake-id name staker)
+              { "amount" : 0.0 }))
+            (update stake-table name
+              { "balance" : (- balance amount) })))))
 )
 
 (create-table stake-table)

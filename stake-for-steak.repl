@@ -38,7 +38,7 @@
 (create-table coin.allocation-table)
 (commit-tx)
 
-(verify "free.stake-for-steak")
+(typecheck "free.stake-for-steak")
 
 ; Setup stake-owner-initial-balance
 (env-data {
@@ -48,8 +48,8 @@
 (env-keys ["stake-owner-public-key", "staker-public-key"])
 (begin-tx)
 (test-capability (coin.COINBASE))
-(coin.coinbase "stake-owner" (read-keyset "stake-owner-keyset") 100.0)
-(coin.coinbase "staker" (read-keyset "staker-keyset") 100.0)
+(coin.coinbase "stake-owner" (read-keyset "stake-owner-keyset") 1000.0)
+(coin.coinbase "staker" (read-keyset "staker-keyset") 1000.0)
 (commit-tx)
 (env-data {})
 (env-keys [])
@@ -196,3 +196,42 @@
   []
   (free.stake-for-steak.get-stakers "refund-stake"))
 (commit-tx)
+
+; Test withdrawing from a stake
+(env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })
+(env-sigs [{
+  "key": "stake-owner-public-key",
+  "caps": [
+    (coin.TRANSFER "stake-owner" "stake-owner-withdraw-stake" 50.0)
+  ]
+}])
+(begin-tx)
+(free.stake-for-steak.create-stake "withdraw-stake" "tulsi-account" "stake-owner" (read-keyset "stake-owner-keyset") 50.0)
+(commit-tx)
+(env-sigs [])
+(env-data {})
+
+(env-sigs [{
+  "key": "stake-owner-public-key",
+  "caps": [
+    (coin.TRANSFER "stake-owner-withdraw-stake" "stake-owner" 50.0)
+  ]
+}])
+(begin-tx)
+(let ((begin-balance (coin.get-balance "stake-owner")))
+  (free.stake-for-steak.withdraw "withdraw-stake" "stake-owner")
+  (expect
+    "Expect stake owner to have his money back"
+    (+ 50.0 begin-balance)
+    (coin.get-balance "stake-owner")))
+(expect
+  "stake to be empty"
+  { "name"     : "withdraw-stake"
+  , "merchant" : "tulsi-account"
+  , "owner"    : "stake-owner"
+  , "stake"    : 50.0
+  , "balance"  : 0.0 }
+  (free.stake-for-steak.get-stake "withdraw-stake"))
+(commit-tx)
+(env-sigs [])
+(env-data {})

@@ -73,6 +73,10 @@
       (fund-stake name owner owner-guard)))
 
   (defun get-stake(name:string)
+    @model [
+      (property (!= name ""))
+    ]
+    (enforce (!= name "") "Name must not be empty")
     (with-read stake-table name
       { "merchant" := merchant
       , "stake"    := stake
@@ -87,6 +91,13 @@
       , "balance"  : balance }))
 
   (defun fund-stake(name:string staker:string staker-guard:guard)
+    @model [
+      (property (!= name ""))
+      (property (!= staker ""))
+      (property (not (row-exists stakers-table (+ (+ staker "-") name) "before")))
+    ]
+    (enforce (!= name "") "Name must not be empty")
+    (enforce (!= staker "") "Staker must not be empty")
     (with-read stake-table name
       { "owner"       := owner
       , "stake"       := stake
@@ -104,16 +115,32 @@
           , "guard"  : staker-guard }))))
 
   (defun pay(name:string initiator:string amount:decimal)
+    @model [
+      (property (!= name ""))
+      (property (!= initiator ""))
+      (property (> amount 0.0))
+      (property (>= (at 'balance (read stake-table name 'before)) amount))
+      (property (> (at 'amount (read stakers-table (+ (+ initiator "-") name) 'before)) 0.0))
+    ]
+    (enforce (!= name "") "Name must not be empty")
+    (enforce (!= initiator "") "Initiator must not be empty")
+    (enforce (> amount 0.0) "Amount must be greater than 0.0")
     (with-read stake-table name
       { "merchant"    := merchant
       , "owner"       := owner
       , "owner-guard" := owner-guard
       , "stakers"     := stakers
       , "balance"     := balance }
+      (enforce (>= balance amount) "Not enough balance")
       (let ((stake-escrow:string (get-stake-id name owner name)))
-        (coin.transfer stake-escrow merchant balance)
-        (update stake-table name
-          { "balance" : (- balance amount) }))))
+        (with-read stakers-table (get-stake-id name initiator)
+          { "amount" := staker-amount
+          , "guard"  := staker-guard }
+          (enforce (> staker-amount 0.0) "Staker has no stake")
+          (enforce-guard staker-guard)
+          (coin.transfer stake-escrow merchant amount)
+          (update stake-table name
+            { "balance" : (- balance amount) })))))
 
   (defun get-stake-id:string (stake:string staker:string)
     ; (enforce (!= stake "") "Stake must not be empty")

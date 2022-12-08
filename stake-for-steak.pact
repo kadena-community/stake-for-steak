@@ -3,6 +3,21 @@
 (define-keyset "free.stake-for-steak-keyset" (read-keyset 'stake-for-steak-keyset))
 
 (module stake-for-steak GOVERNANCE
+  @model [
+    (defproperty get-stake-id(name:string staker:string)
+      (+ (+ staker "-") name))
+    (defproperty staker-exists(name:string staker:string)
+      (row-exists stakers-table (get-stake-id name staker) "before"))
+    (defproperty get-stake-balance(name:string)
+      (at 'balance (read stake-table name "before")))
+    (defproperty get-stake-balance-after(name:string)
+      (at 'balance (read stake-table name "after")))
+    (defproperty get-staked-amount(staker-id:string)
+      (at 'amount (read stakers-table staker-id "before")))
+    (defproperty conserves-stake-mass (name:string staker:string)
+      (= (cell-delta stake-table 'balance name)
+         (cell-delta stakers-table 'amount (get-stake-id name staker))))
+  ]
   (defcap GOVERNANCE ()
     (enforce-guard (read-keyset "free.stake-for-steak-keyset")))
 
@@ -94,7 +109,7 @@
     @model [
       (property (!= name ""))
       (property (!= staker ""))
-      (property (not (row-exists stakers-table (+ (+ staker "-") name) "before")))
+      (property (not (staker-exists name staker)))
     ]
     (enforce (!= name "") "Name must not be empty")
     (enforce (!= staker "") "Staker must not be empty")
@@ -119,8 +134,8 @@
       (property (!= name ""))
       (property (!= initiator ""))
       (property (> amount 0.0))
-      (property (>= (at 'balance (read stake-table name 'before)) amount))
-      (property (> (at 'amount (read stakers-table (+ (+ initiator "-") name) 'before)) 0.0))
+      (property (>= (get-stake-balance name) amount))
+      (property (> (get-staked-amount (get-stake-id name initiator)) 0.0))
     ]
     (enforce (!= name "") "Name must not be empty")
     (enforce (!= initiator "") "Initiator must not be empty")
@@ -164,10 +179,7 @@
 
   (defun refund-staker(name:string escrow-id:string refund:decimal staker:string)
     @model [
-      (property
-        (=
-          (cell-delta stake-table 'balance name)
-          (cell-delta stakers-table 'amount (+ (+ staker "-") name))))
+      (property (conserves-stake-mass name staker))
     ]
     (require-capability (STAKE_FOR_STEAK))
 
@@ -179,7 +191,7 @@
     @model [
       (property (!= staker-id ""))
       (property (> refund 0.0))
-      (property (<= refund (at 'amount (read stakers-table staker-id 'before))))
+      (property (<= refund (get-staked-amount staker-id)))
     ]
     (require-capability (STAKE_FOR_STEAK))
     (with-read stakers-table staker-id
@@ -194,8 +206,8 @@
     @model [
       (property (!= name ""))
       (property (> refund 0.0))
-      (property (>=(at 'balance (read stake-table name 'before)) refund))
-      (property (>= (at 'balance (read stake-table name 'after)) 0.0))
+      (property (>= (get-stake-balance name) refund))
+      (property (>= (get-stake-balance-after name) 0.0))
     ]
     (require-capability (STAKE_FOR_STEAK))
     (with-read stake-table name

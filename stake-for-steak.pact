@@ -120,28 +120,31 @@
     ; (enforce (!= staker "") "Staker must not be empty")
     (format "{}-{}" [staker stake]))
 
-  ; TODO: remove this for actual implementation, only mocked so we can do formal verification
-  (defun get-stakers(name:string)
-    (let ((stake-owner (read stakers-table (get-stake-id name "stake-owner")))
-         (staker (read stakers-table (get-stake-id name "staker"))))
-      (filter (where 'amount (!= 0.0)) [stake-owner staker])))
-  ; (defun get-stakers(name:string)
-  ;   (select stakers-table
-  ;     ['staker 'stake 'amount]
-  ;     (and?
-  ;       (where 'stake (= name))
-  ;       (where 'amount (!= 0.0)))))
+  (defun get-staker(name:string staker:string)
+    (with-default-read stakers-table (get-stake-id name staker)
+      { "stake"  : name
+      , "staker" : staker
+      , "amount" : 0.0 }
+      { "stake"  := stake
+      , "staker" := staker
+      , "amount" := amount }
+      { "stake"  : stake
+      , "staker" : staker
+      , "amount" : amount }))
 
-  (defun refund-staker(name:string staker-id:string escrow-id:string refund:decimal staker:string)
+  (defun get-stakers(name:string stakers:[string])
+    (map (get-staker name) stakers))
+
+  (defun refund-staker(name:string escrow-id:string refund:decimal staker:string)
     @model [
       (property
         (=
           (cell-delta stake-table 'balance name)
-          (cell-delta stakers-table 'amount staker-id)))
+          (cell-delta stakers-table 'amount (+ (+ staker "-") name))))
     ]
     (require-capability (STAKE_FOR_STEAK))
 
-    (refund-staker-row staker-id refund)
+    (refund-staker-row (get-stake-id name staker) refund)
     (refund-stake-row name refund)
     (coin.transfer escrow-id staker refund))
 
@@ -179,9 +182,6 @@
         { "balance" : (- balance refund)
         , "stakers" : (- stakers 1) })))
 
-  (defun refund-staker-mapper(name:string owner:string refund staker:string)
-    (refund-staker name (get-stake-id name staker) (get-stake-id name owner) refund staker))
-
   (defun refund-stake(name:string staker-accounts:[string])
     (with-capability (STAKE_FOR_STEAK)
       (with-read stake-table name
@@ -190,7 +190,7 @@
         , "stake"           := stake
         , "balance"         := balance }
         (map
-          (refund-staker-mapper name owner (/ balance stakers))
+          (refund-staker name (get-stake-id name owner) (/ balance stakers))
           staker-accounts))))
 
   (defun withdraw(name:string staker:string)

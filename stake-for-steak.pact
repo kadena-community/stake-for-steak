@@ -8,12 +8,18 @@
       (+ (+ staker "-") name))
     (defproperty staker-exists(name:string staker:string)
       (row-exists stakers-table (get-stake-id name staker) "before"))
+    (defproperty get-amount-of-stakers(name:string)
+      (at 'stakers (read stake-table name "before")))
     (defproperty get-stake-balance(name:string)
       (at 'balance (read stake-table name "before")))
     (defproperty get-stake-balance-after(name:string)
       (at 'balance (read stake-table name "after")))
     (defproperty get-staked-amount(staker-id:string)
       (at 'amount (read stakers-table staker-id "before")))
+    (defproperty has-staked(balance:decimal stakers:integer amount:decimal)
+      (<= (/ balance stakers) amount))
+    (defproperty conserves-paid-stake(balance:decimal stakers:integer amount:decimal)
+      (<= (/ balance stakers) amount))
     (defproperty conserves-stake-mass (name:string staker:string)
       (= (cell-delta stake-table 'balance name)
          (cell-delta stakers-table 'amount (get-stake-id name staker))))
@@ -234,19 +240,48 @@
 
   (defun withdraw(name:string staker:string)
     (with-capability (STAKE_FOR_STEAK)
-      (with-read stakers-table (get-stake-id name staker)
-        { "amount" := amount }
-        (with-read stake-table name
-          { "balance" := balance
-          , "stakers" := stakers
-          , "owner"   := owner }
-          (let ((stake-escrow:string (get-stake-id name owner)))
-            (coin.transfer stake-escrow staker amount)
-            (update stakers-table (get-stake-id name staker)
-              { "amount" : 0.0 }))
-            (update stake-table name
-              { "balance" : (- balance amount)
-              , "stakers" : (- stakers 1) })))))
+      (with-read stake-table name
+        { "balance" := balance
+        , "stakers" := stakers
+        , "owner"   := owner }
+        (let ((stake-escrow:string (get-stake-id name owner))
+              (left-over:decimal (/ balance stakers)))
+          (coin.transfer stake-escrow staker left-over)
+          (withdraw-stake name)
+          (withdraw-staker (get-stake-id name staker) left-over)))))
+
+  (defun withdraw-staker(stake-id:string left-over:decimal)
+    @model [
+      (property (!= stake-id ""))
+      (property (> left-over 0.0))
+    ]
+    (require-capability (STAKE_FOR_STEAK))
+    (enforce (!= stake-id "") "Stake ID must not be empty")
+    (enforce (> left-over 0.0) "Left over must be greater than 0.0")
+    (with-read stakers-table stake-id
+      { "amount" := staker-amount }
+      (enforce (>= left-over staker-amount) "Staker has not staked")
+      (update stakers-table stake-id
+        { "amount" : 0.0 })))
+
+  (defun withdraw-stake(name:string)
+    @model [
+      (property (!= name ""))
+      (property (>= (get-stake-balance name) 0.0))
+      (property (>= (get-stake-balance-after name) 0.0))
+      (property (>= (get-amount-of-stakers name) 0))
+    ]
+    (require-capability (STAKE_FOR_STEAK))
+    (enforce (!= name "") "Name must not be empty")
+    (with-read stake-table name
+      { "balance" := balance
+      , "stakers" := stakers }
+      (enforce (> balance 0.0) "Stake has no balance")
+      (enforce (> stakers 0) "Stake has no stakers")
+      (let ((left-over:decimal (/ balance stakers)))
+        (update stake-table name
+          { "balance" : (- balance left-over)
+          , "stakers" : (- stakers 1) }))))
 )
 
 (create-table stake-table)

@@ -38,18 +38,20 @@
 (create-table coin.allocation-table)
 (commit-tx)
 
-(verify "free.stake-for-steak")
+; (verify "free.stake-for-steak")
 
 ; Setup stake-owner-initial-balance
 (env-data {
  "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" },
- "staker-keyset": { "keys": [ "staker-public-key" ], "pred": "keys-all" }
+ "staker-keyset": { "keys": [ "staker-public-key" ], "pred": "keys-all" },
+ "tulsi-keyset": { "keys": [ "tulsi-public-key" ], "pred": "keys-all" }
 })
 (env-keys ["stake-owner-public-key", "staker-public-key"])
 (begin-tx)
 (test-capability (coin.COINBASE))
 (coin.coinbase "stake-owner" (read-keyset "stake-owner-keyset") 1000.0)
 (coin.coinbase "staker" (read-keyset "staker-keyset") 1000.0)
+(coin.coinbase "tulsi-account" (read-keyset "tulsi-keyset") 1000.0)
 (commit-tx)
 (env-data {})
 (env-keys [])
@@ -139,6 +141,16 @@
 (commit-tx)
 (env-data {})
 (env-sigs [])
+
+; Test payment
+(env-keys ['stake-owner-public-key])
+(begin-tx)
+(free.stake-for-steak.pay "tulsi-stake" "stake-owner" 75.0)
+(expect 
+  "Stake to be paid"
+  1075.0
+  (coin.get-balance "tulsi-account"))
+(commit-tx)
 
 ; Test refunding a stake
 (env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })

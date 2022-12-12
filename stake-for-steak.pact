@@ -31,6 +31,9 @@
   (defcap STAKE_FOR_STEAK ()
     true)
 
+  (defcap STAKER ()
+    true)
+
   (use coin)
 
   ; Schema for the stake
@@ -61,7 +64,7 @@
 
   (defun stake-guard:bool (owner-guard:guard)
     (require-capability (STAKE_FOR_STEAK))
-    (enforce-guard owner-guard))
+    (require-capability (STAKER)))
 
   (defun create-stake-guard:guard(owner-guard:guard)
     (create-user-guard (stake-guard owner-guard)))
@@ -147,22 +150,25 @@
     (enforce (!= name "") "Name must not be empty")
     (enforce (!= initiator "") "Initiator must not be empty")
     (enforce (> amount 0.0) "Amount must be greater than 0.0")
-    (with-read stake-table name
-      { "merchant"    := merchant
-      , "owner"       := owner
-      , "owner-guard" := owner-guard
-      , "stakers"     := stakers
-      , "balance"     := balance }
-      (enforce (>= balance amount) "Not enough balance")
-      (let ((stake-escrow:string (get-stake-id name owner name)))
-        (with-read stakers-table (get-stake-id name initiator)
-          { "amount" := staker-amount
-          , "guard"  := staker-guard }
-          (enforce (> staker-amount 0.0) "Staker has no stake")
-          (enforce-guard staker-guard)
-          (coin.transfer stake-escrow merchant amount)
-          (update stake-table name
-            { "balance" : (- balance amount) })))))
+    (with-capability (STAKE_FOR_STEAK)
+      (with-capability (STAKER)
+        (with-read stake-table name
+          { "merchant"    := merchant
+          , "owner"       := owner
+          , "owner-guard" := owner-guard
+          , "stakers"     := stakers
+          , "balance"     := balance }
+          (enforce (>= balance amount) "Not enough balance")
+          (let ((stake-escrow:string (get-stake-id name owner)))
+            (with-read stakers-table (get-stake-id name initiator)
+              { "amount" := staker-amount
+              , "guard"  := staker-guard }
+              (enforce (> staker-amount 0.0) "Staker has no stake")
+              (enforce-guard staker-guard)
+              (install-capability (coin.TRANSFER stake-escrow merchant amount))
+              (coin.transfer stake-escrow merchant amount)
+              (update stake-table name
+                { "balance" : (- balance amount) })))))))
 
   (defun get-stake-id:string (stake:string staker:string)
     ; (enforce (!= stake "") "Stake must not be empty")
@@ -234,16 +240,17 @@
 
   (defun refund-stake(name:string staker-accounts:[string])
     (with-capability (STAKE_FOR_STEAK)
-      (with-read stake-table name
-        { "owner"           := owner
-        , "stakers"         := stakers
-        , "stake"           := stake
-        , "balance"         := balance }
-        (let ((escrow-id (get-stake-id name owner))
-              (refund (get-refund balance stakers)))
-          (map
-            (refund-staker name escrow-id refund)
-            staker-accounts)))))
+      (with-capability (STAKER)
+        (with-read stake-table name
+          { "owner"           := owner
+          , "stakers"         := stakers
+          , "stake"           := stake
+          , "balance"         := balance }
+          (let ((escrow-id (get-stake-id name owner))
+                (refund (get-refund balance stakers)))
+            (map
+              (refund-staker name escrow-id refund)
+              staker-accounts))))))
 
   (defun get-refund:decimal(balance:decimal stakers:integer)
     @model [
@@ -263,17 +270,18 @@
       (property (> (get-staked-amount (get-stake-id name staker)) 0.0))
     ]
     (with-capability (STAKE_FOR_STEAK)
-      (enforce (!= name "") "Name must not be empty")
-      (enforce (!= staker "") "Staker must not be empty")
-      (with-read stake-table name
-        { "balance" := balance
-        , "stakers" := stakers
-        , "owner"   := owner }
-        (let ((stake-escrow:string (get-stake-id name owner))
-              (left-over:decimal (get-left-over name)))
-          (coin.transfer stake-escrow staker left-over)
-          (withdraw-stake name)
-          (withdraw-staker (get-stake-id name staker) left-over)))))
+      (with-capability (STAKER)
+        (enforce (!= name "") "Name must not be empty")
+        (enforce (!= staker "") "Staker must not be empty")
+        (with-read stake-table name
+          { "balance" := balance
+          , "stakers" := stakers
+          , "owner"   := owner }
+          (let ((stake-escrow:string (get-stake-id name owner))
+                (left-over:decimal (get-left-over name)))
+            (coin.transfer stake-escrow staker left-over)
+            (withdraw-stake name)
+            (withdraw-staker (get-stake-id name staker) left-over))))))
 
   (defun get-left-over:decimal (name:string)
     @model [

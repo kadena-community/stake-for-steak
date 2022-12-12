@@ -31,8 +31,10 @@
   (defcap STAKE_FOR_STEAK ()
     true)
 
-  (defcap STAKER ()
-    true)
+  (defcap STAKER (name:string staker:string)
+    (with-read stakers-table (get-stake-id name staker)
+      { "guard":= staker-guard }
+      (enforce-guard staker-guard)))
 
   (use coin)
 
@@ -62,12 +64,12 @@
     guard:guard)
   (deftable stakers-table:{stakers-schema})
 
-  (defun stake-guard:bool (owner-guard:guard)
+  (defun stake-guard:bool (name:string staker:string)
     (require-capability (STAKE_FOR_STEAK))
-    (require-capability (STAKER)))
+    (require-capability (STAKER name staker)))
 
-  (defun create-stake-guard:guard(owner-guard:guard)
-    (create-user-guard (stake-guard owner-guard)))
+  (defun create-stake-guard:guard(name:string staker:string)
+    (create-user-guard (stake-guard name staker)))
 
   (defun create-stake(name:string
                       merchant:string
@@ -87,7 +89,7 @@
     (enforce (!= merchant "") "Merchant must not be empty")
 
     (let ((stake-escrow:string (get-stake-id name owner)))
-      (create-account stake-escrow (create-stake-guard owner-guard))
+      (coin.create-account stake-escrow (create-stake-guard name owner))
       (insert stake-table name
         { "merchant"    : merchant
         , "owner"       : owner
@@ -151,21 +153,20 @@
     (enforce (!= initiator "") "Initiator must not be empty")
     (enforce (> amount 0.0) "Amount must be greater than 0.0")
     (with-capability (STAKE_FOR_STEAK)
-      (with-capability (STAKER)
-        (with-read stake-table name
-          { "merchant"    := merchant
-          , "owner"       := owner
-          , "owner-guard" := owner-guard
-          , "stakers"     := stakers
-          , "balance"     := balance }
-          (enforce (>= balance amount) "Not enough balance")
-          (let ((stake-escrow:string (get-stake-id name owner)))
-            (with-read stakers-table (get-stake-id name initiator)
-              { "amount" := staker-amount
-              , "guard"  := staker-guard }
-              (enforce (> staker-amount 0.0) "Staker has no stake")
-              (enforce-guard staker-guard)
-              (install-capability (coin.TRANSFER stake-escrow merchant amount))
+      (with-read stake-table name
+        { "merchant"    := merchant
+        , "owner"       := owner
+        , "owner-guard" := owner-guard
+        , "stakers"     := stakers
+        , "balance"     := balance }
+        (enforce (>= balance amount) "Not enough balance")
+        (let ((stake-escrow:string (get-stake-id name owner)))
+          (with-read stakers-table (get-stake-id name initiator)
+            { "amount" := staker-amount
+            , "guard"  := staker-guard }
+            (enforce (> staker-amount 0.0) "Staker has no stake")
+            (with-capability (STAKER name initiator)
+            ; (enforce-guard staker-guard)
               (coin.transfer stake-escrow merchant amount)
               (update stake-table name
                 { "balance" : (- balance amount) })))))))
@@ -238,9 +239,9 @@
         { "balance" : (- balance refund)
         , "stakers" : (- stakers 1) })))
 
-  (defun refund-stake(name:string staker-accounts:[string])
+  (defun refund-stake(name:string initiator:string staker-accounts:[string])
     (with-capability (STAKE_FOR_STEAK)
-      (with-capability (STAKER)
+      (with-capability (STAKER name initiator)
         (with-read stake-table name
           { "owner"           := owner
           , "stakers"         := stakers
@@ -270,7 +271,7 @@
       (property (> (get-staked-amount (get-stake-id name staker)) 0.0))
     ]
     (with-capability (STAKE_FOR_STEAK)
-      (with-capability (STAKER)
+      (with-capability (STAKER name staker)
         (enforce (!= name "") "Name must not be empty")
         (enforce (!= staker "") "Staker must not be empty")
         (with-read stake-table name

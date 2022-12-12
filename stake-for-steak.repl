@@ -143,7 +143,13 @@
 (env-sigs [])
 
 ; Test payment
-(env-keys ['stake-owner-public-key])
+(env-sigs [{
+  "key": "stake-owner-public-key",
+  "caps": [
+    (coin.TRANSFER "stake-owner-tulsi-stake" "tulsi-account" 75.0)
+    (free.stake-for-steak.STAKER "tulsi-stake" "stake-owner")
+  ]
+}])
 (begin-tx)
 (free.stake-for-steak.pay "tulsi-stake" "stake-owner" 75.0)
 (expect 
@@ -193,10 +199,11 @@
   "caps": [
     (coin.TRANSFER "stake-owner-refund-stake" "stake-owner" 50.0)
     (coin.TRANSFER "stake-owner-refund-stake" "staker" 50.0)
+    (free.stake-for-steak.STAKER "refund-stake" "stake-owner")
   ]
 }])
 (begin-tx)
-(free.stake-for-steak.refund-stake "refund-stake" ["stake-owner" "staker"])
+(free.stake-for-steak.refund-stake "refund-stake" "stake-owner" ["stake-owner" "staker"])
 (expect
   "Stake to be refunded"
   { "name"     : "refund-stake"
@@ -237,6 +244,7 @@
   "key": "stake-owner-public-key",
   "caps": [
     (coin.TRANSFER "stake-owner-withdraw-stake" "stake-owner" 50.0)
+    (free.stake-for-steak.STAKER "withdraw-stake" "stake-owner")
   ]
 }])
 (begin-tx)

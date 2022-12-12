@@ -186,6 +186,10 @@
 
   (defun refund-staker(name:string escrow-id:string refund:decimal staker:string)
     @model [
+      (property (!= name ""))
+      (property (!= escrow-id ""))
+      (property (!= staker ""))
+      (property (> refund 0.0))
       (property (conserves-stake-mass name staker))
     ]
     (require-capability (STAKE_FOR_STEAK))
@@ -235,9 +239,20 @@
         , "stakers"         := stakers
         , "stake"           := stake
         , "balance"         := balance }
-        (map
-          (refund-staker name (get-stake-id name owner) (/ balance stakers))
-          staker-accounts))))
+        (let ((escrow-id (get-stake-id name owner))
+              (refund (get-refund balance stakers)))
+          (map
+            (refund-staker name escrow-id refund)
+            staker-accounts)))))
+
+  (defun get-refund:decimal(balance:decimal stakers:integer)
+    @model [
+      (property (> balance 0.0))
+      (property (> stakers 0))
+    ]
+    (enforce (> balance 0.0) "Balance must be greater than 0.0")
+    (enforce (> stakers 0) "Stakers must be greater than 0")
+    (/ balance stakers))
 
   (defun withdraw(name:string staker:string)
     @model [

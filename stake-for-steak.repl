@@ -137,7 +137,7 @@
 (expect
   "Receive a list of stakers"
   [{ "staker": "stake-owner", "amount": 50.0 }, { "staker": "staker", "amount": 50.0 }]
-  (map (lambda (staker) { "staker": (at 'staker staker) , "amount": 50.0 }) (free.stake-for-steak.get-stakers "tulsi-stake" ["stake-owner", "staker"])))
+  (map (lambda (staker) { "staker": (at 'staker staker) , "amount": 50.0 }) (free.stake-for-steak.get-stakers "tulsi-stake")))
 (commit-tx)
 (env-data {})
 (env-sigs [])
@@ -213,17 +213,6 @@
   , "stakers"  : []
   , "balance"  : 0.0 }
   (free.stake-for-steak.get-stake "refund-stake"))
-(expect
-  "Stakers to be reset to 0.0"
-  [
-    { "stake": "refund-stake"
-    , "staker": "stake-owner"
-    , "amount": 0.0 }
-    { "stake": "refund-stake"
-    , "staker": "staker"
-    , "amount": 0.0 }
-  ]
-  (free.stake-for-steak.get-stakers "refund-stake" ["stake-owner" "staker"]))
 (commit-tx)
 
 ; Test withdrawing from a stake

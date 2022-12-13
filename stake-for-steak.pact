@@ -198,8 +198,10 @@
       , "staker" : staker
       , "amount" : amount }))
 
-  (defun get-stakers(name:string stakers:[string])
-    (map (get-staker name) stakers))
+  (defun get-stakers(name:string)
+    (with-read stake-table name 
+      { "stakers" := stakers }
+      (map (get-staker name) stakers)))
 
   (defun refund-staker(name:string escrow-id:string refund:decimal staker:string)
     @model [

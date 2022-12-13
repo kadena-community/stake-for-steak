@@ -72,7 +72,7 @@
   , "merchant" : "tulsi-account"
   , "owner"    : "stake-owner"
   , "stake"    : 50.0
-  , "stakers"  : 1
+  , "stakers"  : ["stake-owner"]
   , "balance"  : 50.0 }
   (free.stake-for-steak.get-stake "tulsi-stake"))
 (expect
@@ -122,7 +122,7 @@
   , "merchant" : "tulsi-account"
   , "owner"    : "stake-owner"
   , "stake"    : 50.0
-  , "stakers"  : 2
+  , "stakers"  : ["stake-owner", "staker"]
   , "balance"  : 100.0 }
   (free.stake-for-steak.get-stake "tulsi-stake"))
 (expect
@@ -210,7 +210,7 @@
   , "merchant" : "tulsi-account"
   , "owner"    : "stake-owner"
   , "stake"    : 50.0
-  , "stakers"  : 0
+  , "stakers"  : []
   , "balance"  : 0.0 }
   (free.stake-for-steak.get-stake "refund-stake"))
 (expect
@@ -260,7 +260,7 @@
   , "merchant" : "tulsi-account"
   , "owner"    : "stake-owner"
   , "stake"    : 50.0
-  , "stakers"  : 0
+  , "stakers"  : []
   , "balance"  : 0.0 }
   (free.stake-for-steak.get-stake "withdraw-stake"))
 (commit-tx)

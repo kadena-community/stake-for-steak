@@ -152,7 +152,7 @@
 }])
 (begin-tx)
 (free.stake-for-steak.pay "tulsi-stake" "stake-owner" 75.0)
-(expect 
+(expect
   "Stake to be paid"
   1075.0
   (coin.get-balance "tulsi-account"))
@@ -203,7 +203,7 @@
   ]
 }])
 (begin-tx)
-(free.stake-for-steak.refund-stake "refund-stake" "stake-owner" ["stake-owner" "staker"])
+(free.stake-for-steak.refund-stake "refund-stake" "stake-owner")
 (expect
   "Stake to be refunded"
   { "name"     : "refund-stake"

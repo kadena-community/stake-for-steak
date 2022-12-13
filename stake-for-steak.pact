@@ -143,6 +143,12 @@
           , "staker" : staker
           , "guard"  : staker-guard }))))
 
+  (defun install-refund-capabilities (escrow:string stakers:[string] amount:decimal)
+    (map (install-refund-capability escrow amount) stakers))
+
+  (defun install-refund-capability(escrow:string amount:decimal staker:string)
+    (install-capability (coin.TRANSFER escrow staker amount)))
+
   (defun pay(name:string initiator:string amount:decimal)
     @model [
       (property (!= name ""))
@@ -170,7 +176,10 @@
             (with-capability (STAKER name initiator)
               (coin.transfer stake-escrow merchant amount)
               (update stake-table name
-                { "balance" : (- balance amount) })))))))
+                { "balance" : (- balance amount) })
+              (install-refund-capabilities stake-escrow stakers amount)
+              (refund-stake name initiator)))))))
+
 
   (defun get-stake-id:string (stake:string staker:string)
     ; (enforce (!= stake "") "Stake must not be empty")
@@ -236,11 +245,12 @@
       (enforce (> balance 0.0) "Stake has no balance")
       (enforce (> refund 0.0) "Refund must be greater than 0.0")
       (enforce (>= balance refund) "Refund must be less than balance")
-      (update stake-table name
-        { "balance" : (- balance refund)
-        , "stakers" : (filter (!= staker) stakers) })))
+      (let ((new-stakers (filter (!= staker) stakers)))
+        (update stake-table name
+          { "balance" : (- balance refund)
+          , "stakers" : new-stakers }))))
 
-  (defun refund-stake(name:string initiator:string staker-accounts:[string])
+  (defun refund-stake(name:string initiator:string)
     (with-capability (STAKE_FOR_STEAK)
       (with-capability (STAKER name initiator)
         (with-read stake-table name
@@ -252,7 +262,7 @@
                 (refund (get-refund balance (length stakers))))
             (map
               (refund-staker name escrow-id refund)
-              staker-accounts))))))
+              stakers))))))
 
   (defun get-refund:decimal(balance:decimal stakers:integer)
     @model [

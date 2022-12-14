@@ -1,0 +1,7 @@
+{
+  "upgrade": true,
+  "stake-for-steak-keyset": {
+    "pred": "keys-all",
+    "keys": ["457117167173a2afafdd72fd05106eaee745a37d808476455d3b1a8acc9ad8d5"]
+  }
+}

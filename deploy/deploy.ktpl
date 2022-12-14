@@ -1,0 +1,12 @@
+codeFile: ../stake-for-steak.pact
+dataFile: stake-for-steak.json
+publicMeta:
+  chainId: "{{chain}}"
+  sender: EnoF-Test
+  gasLimit: 100000
+  gasPrice: 0.000000010000
+  ttl: 28800
+networkId: testnet04
+signers:
+  - public: 457117167173a2afafdd72fd05106eaee745a37d808476455d3b1a8acc9ad8d5
+type: exec

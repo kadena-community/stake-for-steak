@@ -80,6 +80,7 @@
     (require-capability (STAKER name staker)))
 
   (defun create-stake-guard:guard(name:string staker:string)
+    @doc "Create a guard for the stake"
     (create-user-guard (stake-guard name staker)))
 
   (defun create-stake(name:string

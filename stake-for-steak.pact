@@ -1,8 +1,13 @@
 (namespace 'free)
 
+; The keyset defined like this allows for keyset rotation.
+; During deployment, make sure to upload signed unrestricted.
+; Otherwise the GOVERNANCE capability cannot be granted
+; which blocks the deployment.
 (define-keyset "free.stake-for-steak-keyset" (read-keyset 'stake-for-steak-keyset))
 
 (module stake-for-steak GOVERNANCE
+  @doc "Stake for steak - create a stake pool so your group can pay for the steak!"
   @model [
     (defproperty get-stake-id(name:string staker:string)
       (+ (+ staker "-") name))
@@ -26,7 +31,9 @@
          (cell-delta stakers-table 'amount (get-stake-id name staker))))
   ]
   (defcap GOVERNANCE ()
-    (enforce-guard (read-keyset "free.stake-for-steak-keyset")))
+    ; Note that the keyset is referred to and not read here
+    ; If it is read, the keyseet can be provided by anyone as transaction data
+    (enforce-keyset "free.stake-for-steak-keyset"))
 
   (defcap STAKE_FOR_STEAK ()
     true)
@@ -67,6 +74,8 @@
   (deftable stakers-table:{stakers-schema})
 
   (defun stake-guard:bool (name:string staker:string)
+    @doc "A guard that protects the stake from being plundered \
+         \by anyone in the stake or creator of the contract"
     (require-capability (STAKE_FOR_STEAK))
     (require-capability (STAKER name staker)))
 
@@ -102,6 +111,7 @@
       (fund-stake name owner owner-guard)))
 
   (defun get-stake(name:string)
+    @doc "Retrieve stake information"
     @model [
       (property (!= name ""))
     ]
@@ -120,6 +130,7 @@
       , "balance"  : balance }))
 
   (defun fund-stake(name:string staker:string staker-guard:guard)
+    @doc "Fund the stake"
     @model [
       (property (!= name ""))
       (property (!= staker ""))
@@ -150,6 +161,7 @@
     (install-capability (coin.TRANSFER escrow staker amount)))
 
   (defun pay(name:string initiator:string amount:decimal)
+    @doc "Pay the merchant and refund the remaining funds to the stakers"
     @model [
       (property (!= name ""))
       (property (!= initiator ""))
@@ -182,11 +194,13 @@
 
 
   (defun get-stake-id:string (stake:string staker:string)
-    ; (enforce (!= stake "") "Stake must not be empty")
-    ; (enforce (!= staker "") "Staker must not be empty")
+    @doc "Form a stake id based on the staker and stake name"
+    (enforce (!= stake "") "Stake must not be empty")
+    (enforce (!= staker "") "Staker must not be empty")
     (format "{}-{}" [staker stake]))
 
   (defun get-staker(name:string staker:string)
+    @doc "Retrieve staker information"
     (with-default-read stakers-table (get-stake-id name staker)
       { "stake"  : name
       , "staker" : staker
@@ -199,11 +213,13 @@
       , "amount" : amount }))
 
   (defun get-stakers(name:string)
+    @doc "Retrieve all stakers for a stake"
     (with-read stake-table name 
       { "stakers" := stakers }
       (map (get-staker name) stakers)))
 
   (defun refund-staker(name:string escrow-id:string refund:decimal staker:string)
+    @doc "Refund a staker - Internal use only"
     @model [
       (property (!= name ""))
       (property (!= escrow-id ""))
@@ -218,6 +234,7 @@
     (coin.transfer escrow-id staker refund))
 
   (defun refund-staker-row(staker-id:string refund:decimal)
+    @doc "Refund a staker - Internal use only"
     @model [
       (property (!= staker-id ""))
       (property (> refund 0.0))
@@ -233,6 +250,7 @@
         { "amount" : (- amount refund) })))
 
   (defun refund-stake-row(name:string refund:decimal staker:string)
+    @doc "Refund a stake - Internal use only"
     @model [
       (property (!= name ""))
       (property (> refund 0.0))
@@ -253,6 +271,7 @@
           , "stakers" : new-stakers }))))
 
   (defun refund-stake(name:string initiator:string)
+    @doc "Refund the stake to the stakers"
     (with-capability (STAKE_FOR_STEAK)
       (with-capability (STAKER name initiator)
         (with-read stake-table name
@@ -267,6 +286,7 @@
               stakers))))))
 
   (defun get-refund:decimal(balance:decimal stakers:integer)
+    @doc "Calculate the refund amount"
     @model [
       (property (> balance 0.0))
       (property (> stakers 0))
@@ -276,6 +296,7 @@
     (/ balance stakers))
 
   (defun withdraw(name:string staker:string)
+    @doc "Withdraw the staker's participation in the stake"
     (with-capability (STAKE_FOR_STEAK)
       (with-capability (STAKER name staker)
         (enforce (!= name "") "Name must not be empty")
@@ -291,6 +312,7 @@
             (withdraw-staker (get-stake-id name staker) left-over))))))
 
   (defun get-left-over:decimal (name:string)
+    @doc "Calculate the left over amount of a stake for refund"
     @model [
       (property (!= name ""))
       (property (> (get-stake-balance name) 0.0))
@@ -307,6 +329,7 @@
         left-over)))
 
   (defun withdraw-staker(stake-id:string left-over:decimal)
+    @doc "Withdraw a staker's participation in the stake - Internal use only"
     @model [
       (property (!= stake-id ""))
       (property (> left-over 0.0))
@@ -322,6 +345,7 @@
         { "amount" : 0.0 })))
 
   (defun withdraw-stake(name:string staker:string)
+    @doc "Withdraw a stake - Internal use only"
     @model [
       (property (!= name ""))
       (property (> (get-stake-balance name) 0.0))
@@ -341,5 +365,7 @@
           , "stakers" : (filter (!= staker) stakers) }))))
 )
 
-(create-table stake-table)
-(create-table stakers-table)
+(if (read-msg 'upgrade)
+  ["Upgrade successful"]
+  [(create-table stake-table)
+   (create-table stakers-table)])

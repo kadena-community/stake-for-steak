@@ -16,6 +16,7 @@
 (commit-tx)
 
 (env-data {
+ "upgrade": false,
  "stake-for-steak-keyset": {
    "keys": [
      "stake-for-steak-public-key"

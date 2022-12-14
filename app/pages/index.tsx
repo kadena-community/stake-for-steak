@@ -28,6 +28,11 @@ export default function Home() {
             <p>Want to know who's coming? An overview of your stake</p>
           </a>
 
+          <a href="/fund" className={styles.card}>
+            <h2>Fund &rarr;</h2>
+            <p>Are you joining for diner? Fund the stake here</p>
+          </a>
+
           <a href="/pay" className={styles.card}>
             <h2>Pay &rarr;</h2>
             <p>Done with your diner? Pay for your steak here</p>

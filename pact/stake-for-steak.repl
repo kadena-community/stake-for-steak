@@ -182,7 +182,7 @@
   , "merchant" : "tulsi-account"
   , "owner"    : "stake-owner"
   , "stake"    : 50.0
-  , "stakers"  : ["stake-owner", "staker"]
+  , "stakers"  : ["staker"]
   , "balance"  : 50.0 }
   (free.stake-for-steak.get-stake "tulsi-stake"))
 (commit-tx)

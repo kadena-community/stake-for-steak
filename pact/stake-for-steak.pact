@@ -186,6 +186,7 @@
         , "owner"       := owner
         , "owner-guard" := owner-guard
         , "stakers"     := stakers
+        , "stake"       := stake
         , "balance"     := balance }
         (enforce (>= balance amount) "Not enough balance")
         (let ((stake-escrow:string (get-stake-id name owner)))
@@ -197,7 +198,7 @@
               (coin.transfer stake-escrow merchant amount)
               (update stake-table name
                 { "balance" : (- balance amount) })
-              (install-refund-capabilities stake-escrow stakers amount)
+              (install-refund-capabilities stake-escrow stakers stake)
               (refund-stake name initiator)))))))
 
 

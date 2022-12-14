@@ -108,6 +108,11 @@
   margin-left: 0.5rem;
 }
 
+.input {
+  display: flex;
+  flex: 1;
+}
+
 @media (max-width: 600px) {
   .grid {
     width: 100%;

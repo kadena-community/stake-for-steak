@@ -159,6 +159,34 @@
   (coin.get-balance "tulsi-account"))
 (commit-tx)
 
+; Test refunding a payed stake
+(env-data {
+  "staker-keyset": {
+    "keys": [
+      "staker-public-key"
+    ],
+    "pred": "keys-all"
+  }
+})
+(env-sigs [{
+  "key": "staker-public-key",
+  "caps": [
+    (coin.TRANSFER "staker" "stake-owner-tulsi-stake" 50.0)
+  ]
+}])
+(begin-tx)
+(free.stake-for-steak.fund-stake "tulsi-stake" "staker" (read-keyset "staker-keyset"))
+(expect
+  "Stake to be created"
+  { "name"     : "tulsi-stake"
+  , "merchant" : "tulsi-account"
+  , "owner"    : "stake-owner"
+  , "stake"    : 50.0
+  , "stakers"  : ["stake-owner", "staker"]
+  , "balance"  : 50.0 }
+  (free.stake-for-steak.get-stake "tulsi-stake"))
+(commit-tx)
+
 ; Test refunding a stake
 (env-data { "stake-owner-keyset": { "keys": [ "stake-owner-public-key" ], "pred": "keys-all" } })
 (env-sigs [{

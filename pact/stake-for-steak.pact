@@ -139,21 +139,28 @@
     ]
     (enforce (!= name "") "Name must not be empty")
     (enforce (!= staker "") "Staker must not be empty")
-    (with-read stake-table name
-      { "owner"       := owner
-      , "stake"       := stake
-      , "stakers"     := stakers
-      , "balance"     := balance }
-      (let ((stake-escrow:string (get-stake-id name owner)))
-        (coin.transfer staker stake-escrow stake)
-        (update stake-table name
-          { "balance" : (+ balance stake)
-          , "stakers" : (+ stakers [staker]) })
-        (insert stakers-table (get-stake-id name staker)
-          { "amount" : stake
-          , "stake"  : name
-          , "staker" : staker
-          , "guard"  : staker-guard }))))
+    (with-default-read stakers-table (get-stake-id name staker)
+      { "amount" : 0.0
+      , "guard"  : staker-guard }
+      { "amount" := amount
+      , "guard"  := new-guard }
+      (enforce (= amount 0.0) "Staker already exists")
+
+      (with-read stake-table name
+        { "owner"       := owner
+        , "stake"       := stake
+        , "stakers"     := stakers
+        , "balance"     := balance }
+        (let ((stake-escrow:string (get-stake-id name owner)))
+          (coin.transfer staker stake-escrow stake)
+          (update stake-table name
+            { "balance" : (+ balance stake)
+            , "stakers" : (+ stakers [staker]) })
+          (write stakers-table (get-stake-id name staker)
+            { "amount" : stake
+            , "stake"  : name
+            , "staker" : staker
+            , "guard"  : staker-guard })))))
 
   (defun install-refund-capabilities (escrow:string stakers:[string] amount:decimal)
     (map (install-refund-capability escrow amount) stakers))
@@ -248,7 +255,7 @@
       (enforce (> refund 0.0) "Refund must be greater than 0.0")
       (enforce (<= refund amount) "Refund must be less than staked amount")
       (update stakers-table staker-id
-        { "amount" : (- amount refund) })))
+        { "amount" : 0.0 })))
 
   (defun refund-stake-row(name:string refund:decimal staker:string)
     @doc "Refund a stake - Internal use only"

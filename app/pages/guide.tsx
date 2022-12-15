@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import styles from "../styles/Home.module.css";
 
 export default function Home() {
@@ -18,30 +19,30 @@ export default function Home() {
         </p>
 
         <div className={styles.grid}>
-          <a href="/create" className={styles.card}>
+          <Link href="/create" className={styles.card}>
             <h2>Create stake &rarr;</h2>
             <p>Plan to eat together? Create a stake for your group!</p>
-          </a>
+          </Link>
 
-          <a href="/view" className={styles.card}>
+          <Link href="/view" className={styles.card}>
             <h2>View stake &rarr;</h2>
-            <p>Want to know who's coming? An overview of your stake</p>
-          </a>
+            <p>Want to know who&apos;s coming? An overview of your stake</p>
+          </Link>
 
-          <a href="/fund" className={styles.card}>
+          <Link href="/fund" className={styles.card}>
             <h2>Fund &rarr;</h2>
             <p>Are you joining for diner? Fund the stake here</p>
-          </a>
+          </Link>
 
-          <a href="/pay" className={styles.card}>
+          <Link href="/pay" className={styles.card}>
             <h2>Pay &rarr;</h2>
             <p>Done with your diner? Pay for your steak here</p>
-          </a>
+          </Link>
 
-          <a href="/withdrawal" className={styles.card}>
+          <Link href="/withdrawal" className={styles.card}>
             <h2>Withdrawal &rarr;</h2>
-            <p>Can't make it? Withdraw your stake here</p>
-          </a>
+            <p>Can&apos;t make it? Withdraw your stake here</p>
+          </Link>
         </div>
       </main>
     </div>

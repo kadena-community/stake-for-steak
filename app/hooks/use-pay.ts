@@ -1,35 +1,35 @@
 import useSWRMutation from "swr/mutation";
 import { Pact, signWithChainweaver } from "@kadena/client";
 
-interface FundInput {
+interface PayInput {
   staker: string;
   keys: string[];
+  amount: number;
 }
-const fundStake = async (name: string, { arg }: { arg: FundInput }) => {
-  const { staker, keys } = arg;
+const pay = async (name: string, { arg }: { arg: PayInput }) => {
+  const { staker, keys, amount } = arg;
   const stake = await (Pact.modules as any)["free.stake-for-steak"]
     ["get-stake"](name)
     .local(
       "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
     );
-
   const stakeId = await (Pact.modules as any)["free.stake-for-steak"]
     ["get-stake-id"](name, stake.result.data.owner)
     .local(
       "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
     );
-
   const command = (Pact.modules as any)["free.stake-for-steak"]
-    ["fund-stake"](name, staker, () => `(read-keyset 'keyset)`)
+    ["pay"](name, staker, amount)
     .addData({
       keyset: { pred: "keys-all", keys },
     })
     .addCap("coin.GAS" as any, keys[0])
+    .addCap("free.stake-for-steak.STAKER", keys[0], name, staker)
     .addCap(
       "coin.TRANSFER" as any,
       keys[0],
-      staker,
       stakeId.result.data,
+      stake.result.data.merchant,
       stake.result.data.stake
     )
     .setMeta({ sender: staker }, "testnet04");
@@ -39,16 +39,15 @@ const fundStake = async (name: string, { arg }: { arg: FundInput }) => {
   const res = await command.send(
     "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
   );
-  console.log(res);
   return res;
 };
 
-export function useFund(name: string | undefined) {
-  const { data, error, isMutating, trigger } = useSWRMutation(name, fundStake);
+export function usePay(name: string | undefined) {
+  const { data, error, isMutating, trigger } = useSWRMutation(name, pay);
   return {
     transaction: data,
-    isFunding: isMutating,
+    isPaying: isMutating,
     isError: error,
-    fund: trigger,
+    pay: trigger,
   };
 }

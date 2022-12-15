@@ -4,10 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm run generate:types && next build",
     "start": "next start",
     "generate:types": "pactjs contract-generate --file ../pact/stake-for-steak.pact && pactjs contract-generate --file ../pact/root/coin-v5.pact",
-    "generate:templates": "pactjs template-generate --file ./templates/ --out ./generated/",
     "lint": "next lint"
   },
   "dependencies": {

@@ -4,13 +4,16 @@ import { useStakes } from "../hooks/use-stakes";
 
 export default function Home() {
   const { stakes, setStakes } = useStakes();
-  const addStake = useCallback(async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const { name } = event.target as Element & {
-      [key: string]: HTMLInputElement;
-    };
-    setStakes([...stakes, name.value]);
-  }, []);
+  const addStake = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const { name } = event.target as Element & {
+        [key: string]: HTMLInputElement;
+      };
+      setStakes([...stakes, name.value]);
+    },
+    [stakes, setStakes]
+  );
   return (
     <div className="">
       <Head>

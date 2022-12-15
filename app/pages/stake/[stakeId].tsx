@@ -18,11 +18,11 @@ export default function StakePage() {
   const fundStake = useCallback(async () => {
     if (!account || !keys?.length) return;
     fund({ staker: account, keys });
-  }, [stakeId, account, keys]);
+  }, [account, keys, fund]);
   const payStake = useCallback(async () => {
     if (!account || !keys?.length) return;
     pay({ staker: account, keys, amount });
-  }, [stakeId, account, keys]);
+  }, [account, keys, amount, pay]);
   if (isFunding || isPaying)
     return (
       <div className="font-bold text-slate-100 text-center p-8">

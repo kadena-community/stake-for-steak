@@ -14,7 +14,7 @@ export default function StoreAccount() {
       setAccount(name.value);
       setKeys(keys.value.split(","));
     },
-    []
+    [setAccount, setKeys]
   );
   if (account && keys?.length)
     return (

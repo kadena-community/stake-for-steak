@@ -25,7 +25,7 @@ export default function StoreAccount() {
   return (
     <form className="flex flex-col" onSubmit={storeAccount}>
       <label className="text-slate-100 p-2">
-        name:
+        Account name:
         <input className="ml-2" name="name" />
       </label>
       <label className="text-slate-100 p-2">

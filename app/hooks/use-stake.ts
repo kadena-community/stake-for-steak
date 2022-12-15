@@ -11,13 +11,22 @@ const fetchStake = async (name: string) => {
   return stake.result.data;
 };
 
-export function useStake(name: string) {
+interface Stake {
+  name: string;
+  stake: number;
+  balance: number;
+  owner: string;
+  stakers: string[];
+  merchant: string;
+}
+
+export function useStake(name: string | undefined) {
   const { data, error, isLoading } = useSWR(name, fetchStake, {
     refreshInterval: 10000,
   });
   return {
-    stake: data,
-    isLoading,
+    stake: data as Stake,
+    isLoading: !data,
     isError: error,
   };
 }

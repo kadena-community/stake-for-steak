@@ -13,9 +13,14 @@ export default function StoreAccount() {
     },
     []
   );
-  if (account) return <p>Account name: {account}</p>;
+  if (account)
+    return (
+      <p className="m-4 text-slate-100 text-right relative xsm:absolute xsm:right-2 top-2 truncate f-right xm:max-w-[10rem]">
+        {account}
+      </p>
+    );
   return (
-    <form onSubmit={storeAccount}>
+    <form className="flex" onSubmit={storeAccount}>
       <label>
         Please enter your account name:
         <input name="name" />

@@ -37,7 +37,7 @@ export default function Home() {
             <input type="text" name="name" id="name" />
           </div>
           <div className={styles.input}>
-            <button type="submit">view</button>
+            <button type="submit" className="button">view</button>
           </div>
         </form>
       </main>

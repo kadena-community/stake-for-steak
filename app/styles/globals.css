@@ -1,3 +1,95 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.kadena-bg {
+    background-image: url(../public/Background.png);
+    background-size: cover;
+    background-color: black;
+    display: grid;
+    grid-template-columns: 20% 60% 20%;
+    grid-template-rows: auto;
+    grid-template-areas:
+            ". . ."
+            ". main ."
+            ". . .";
+}
+
+.button {
+    background-color: #770746;
+    min-width: 200px;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 0.8em;
+    margin-top: .3em;
+}
+
+.account {
+    color: #fff;
+    font-size:1em;
+}
+
+.label {
+    display: flex;
+    flex-direction: column;
+}
+
+.label input {
+    color: #000;
+    padding: 0.5em;
+    min-width: 300px;
+    margin-top: .3em;
+}
+
+.sweet-title {
+    color: #fff;
+    text-transform: uppercase;
+    font-size: clamp(3rem, 5vw, 4rem);
+    text-shadow: 3px 1px 1px #000, 2px 2px 1px #770746, 4px 2px 1px #000, 3px 3px 1px #770746, 5px 3px 1px #000, 4px 4px 1px #770746, 6px 4px 1px #000, 5px 5px 1px #770746, 7px 5px 1px #000, 6px 6px 1px #770746, 8px 6px 1px #000, 7px 7px 1px #770746, 9px 7px 1px #000;
+}
+.sweet-title span {
+    display: block;
+    position: relative;
+}
+.sweet-title span:before {
+    content: attr(data-text);
+    position: absolute;
+    text-shadow: 2px 2px 1px #e94aa1, -1px -1px 1px #c736f9, -2px 2px 1px #e94aa1, 1px -1px 1px #f736f9;
+    z-index: 1;
+}
+.sweet-title span:nth-child(1) {
+    padding-right: 2.25rem;
+}
+.sweet-title span:nth-child(2) {
+    padding-left: 2.25rem;
+}
+
+
+@media (max-width: 600px) {
+    .kadena-bg {
+        background-image: url(../public/Background.png);
+        background-size: cover;
+        background-color: black;
+        display: grid;
+        grid-template-columns: 100%;
+        grid-template-rows: auto;
+        padding: 15px;
+        box-sizing: border-box;
+        grid-template-areas:
+            "main"
+    }
+
+    .fixed {
+        position: relative;
+        justify-content: center;
+    }
+
+    .button {
+        min-width: 150px;
+    }
+
+    .sweet-title {
+        color: #fff;
+        font-size: 2rem;
+    }
+}

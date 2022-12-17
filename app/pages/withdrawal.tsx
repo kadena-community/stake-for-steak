@@ -76,7 +76,7 @@ export default function Home() {
             <input type="text" name="keys" id="keys" />
           </div>
           <div className={styles.input}>
-            <button type="submit">Withdraw</button>
+            <button type="submit" className="button">Withdraw</button>
           </div>
         </form>
       </main>

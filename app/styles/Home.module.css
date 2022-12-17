@@ -3,13 +3,16 @@
 }
 
 .main {
-  min-height: 100vh;
+  max-height: 50vh;
   padding: 4rem 0;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  grid-area: main;
+  border-radius: 20px;
+  background: rgba(250 ,250, 250, 0.1);
 }
 
 .footer {
@@ -114,9 +117,9 @@
 }
 
 @media (max-width: 600px) {
-  .grid {
-    width: 100%;
-    flex-direction: column;
+  .main {
+    max-height: 100%;
+    justify-content: flex-start;
   }
 }
 

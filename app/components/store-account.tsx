@@ -18,22 +18,22 @@ export default function StoreAccount() {
   );
   if (account && keys?.length)
     return (
-      <p className="m-4 text-slate-100 text-right relative xsm:absolute xsm:right-2 top-2 truncate f-right xm:max-w-[10rem]">
+      <p className="account">
         {account}
       </p>
     );
   return (
     <form className="flex flex-col" onSubmit={storeAccount}>
-      <label className="text-slate-100 p-2">
+      <label className="text-slate-100 p-2 label">
         Account name:
-        <input className="ml-2" name="name" />
+        <input name="name" />
       </label>
-      <label className="text-slate-100 p-2">
+      <label className="text-slate-100 p-2 label">
         public keys:
-        <input className="ml-2" name="keys" />
+        <input name="keys" />
       </label>
       <button
-        className="block p-2 m-2 bg-slate-700 rounded-md text-slate-100"
+        className="block p-2 m-2 button rounded-md text-slate-100"
         type="submit"
       >
         Store

@@ -79,7 +79,7 @@ export default function Home() {
             <input type="number" name="amount" id="amount" min="0.000001" />
           </div>
           <div className={styles.input}>
-            <button type="submit">Pay</button>
+            <button type="submit" className="button">Pay</button>
           </div>
         </form>
       </main>

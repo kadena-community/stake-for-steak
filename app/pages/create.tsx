@@ -75,7 +75,7 @@ export default function Home() {
             <input type="number" name="stake" id="stake" />
           </div>
           <div className={styles.input}>
-            <button type="submit">Create</button>
+            <button type="submit" className="button">Create</button>
           </div>
         </form>
       </main>

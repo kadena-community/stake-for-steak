@@ -48,7 +48,7 @@ export default function StakePage() {
         Stakers: {stake.stakers.join(",")}
       </p>
       <button
-        className="block p-2 m-2 bg-slate-700 rounded-md text-slate-100"
+        className="block p-2 m-2 button rounded-md text-slate-100"
         onClick={fundStake}
       >
         fund
@@ -64,7 +64,7 @@ export default function StakePage() {
         />
       </label>
       <button
-        className="block p-2 m-2 bg-slate-700 rounded-md text-slate-100"
+        className="block p-2 m-2 button rounded-md text-slate-100"
         onClick={payStake}
       >
         pay

@@ -1,6 +1,7 @@
 import Head from "next/head";
 import StakesOverview from "../components/stakes-overview";
 import StoreAccount from "../components/store-account";
+import styles from "../styles/Home.module.css";
 
 export default function Home() {
   return (
@@ -11,9 +12,9 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="p-2">
-        <h1 className="text-3xl font-bold text-slate-100 text-center">
-          Stake for Steak
+      <main className={styles.main}>
+        <h1 className="sweet-title">
+            <span data-text="Stake for Steak">Stake for Steak</span>
         </h1>
         <StoreAccount />
         <StakesOverview />

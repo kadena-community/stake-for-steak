@@ -30,13 +30,13 @@ const pay = async (name: string, { arg }: { arg: PayInput }) => {
       keys[0],
       stakeId.result.data,
       stake.result.data.merchant,
-      stake.result.data.stake
+      amount
     )
     .setMeta({ sender: staker }, "testnet04");
 
   await signWithChainweaver(command);
 
-  const res = await command.send(
+  const res = await command.local(
     "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
   );
   return res;

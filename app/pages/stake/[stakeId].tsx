@@ -63,7 +63,7 @@ export default function StakePage() {
             type="number"
             name="amount"
             min="0.000001"
-            onChange={(e: any) => setAmount(e.target.value)}
+            onChange={(e: any) => setAmount(parseFloat(e.target.value))}
           />
         </label>
         <div className="grid grid-cols-2">

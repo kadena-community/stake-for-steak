@@ -2,14 +2,18 @@ import Head from "next/head";
 import { FormEvent, useCallback } from "react";
 import { Pact, signWithChainweaver } from "@kadena/client";
 import styles from "../styles/Home.module.css";
+import { useDetails } from "../hooks/use-details";
+import { useAccount } from "../hooks/use-account";
 
 export default function Home() {
+  const { account } = useAccount();
+  const { details } = useDetails(account);
   const withdraw = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const { name, staker, keys } = event.target as Element & {
+    const { name } = event.target as Element & {
       [key: string]: HTMLInputElement;
     };
-    const pubkeys = keys.value.split(",").map((key) => key.trim());
+    const keys = details.guard.keys;
     const stake = await (Pact.modules as any)["free.stake-for-steak"]
       ["get-stake"](name.value)
       .local(
@@ -22,25 +26,20 @@ export default function Home() {
         "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
       );
     const command = (Pact.modules as any)["free.stake-for-steak"]
-      ["withdraw"](name.value, staker.value)
+      ["withdraw"](name.value, account)
       .addData({
-        keyset: { pred: "keys-all", keys: keys.value.split(",") },
+        keyset: { pred: "keys-all", keys },
       })
-      .addCap("coin.GAS" as any, pubkeys[0])
-      .addCap(
-        "free.stake-for-steak.STAKER",
-        pubkeys[0],
-        name.value,
-        staker.value
-      )
+      .addCap("coin.GAS" as any, keys[0])
+      .addCap("free.stake-for-steak.STAKER", keys[0], name.value, account)
       .addCap(
         "coin.TRANSFER" as any,
-        pubkeys[0],
+        keys[0],
         stakeId.result.data,
-        staker.value,
+        account,
         stake.result.data.stake
       )
-      .setMeta({ sender: staker.value }, "testnet04");
+      .setMeta({ sender: account }, "testnet04");
 
     await signWithChainweaver(command);
 
@@ -50,7 +49,7 @@ export default function Home() {
     console.log(res);
   }, []);
   return (
-    <div className={styles.container}>
+    <>
       <Head>
         <title>Stake for steak</title>
         <meta name="description" content="Stake for stake" />
@@ -58,28 +57,28 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>Withdraw</h1>
+        <h1 className="sweet-title">Withdraw</h1>
 
-        <p className={styles.description}>Withdraw your stake here</p>
+        <p className="text-slate-100">Withdraw your stake here</p>
 
-        <form onSubmit={withdraw} className={styles.grid}>
-          <div className={styles.input}>
-            <label htmlFor="name">Name</label>
-            <input type="text" name="name" id="name" />
+        <form onSubmit={withdraw} className="m-4">
+          <div className="text-slate-100 m-2">
+            <label htmlFor="name">Name: </label>
+            <input
+              className="text-slate-700 p-1"
+              type="text"
+              name="name"
+              id="name"
+            />
           </div>
-          <div className={styles.input}>
-            <label htmlFor="staker">Staker</label>
-            <input type="text" name="staker" id="staker" />
-          </div>
-          <div className={styles.input}>
-            <label htmlFor="keys">Keys</label>
-            <input type="text" name="keys" id="keys" />
-          </div>
-          <div className={styles.input}>
-            <button type="submit" className="button">Withdraw</button>
-          </div>
+          <button
+            type="submit"
+            className="block button rounded-md text-slate-100"
+          >
+            Withdraw
+          </button>
         </form>
       </main>
-    </div>
+    </>
   );
 }

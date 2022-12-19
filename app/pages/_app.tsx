@@ -17,6 +17,11 @@ export default function App({ Component, pageProps }: AppProps) {
             add stake
           </span>
         </Link>
+        <Link href="/create">
+          <span className="block p-2 m-2 button rounded-md text-slate-100">
+            create stake
+          </span>
+        </Link>
       </footer>
     </div>
   );

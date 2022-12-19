@@ -11,19 +11,22 @@ export default function Home() {
   const { details } = useDetails(account);
   const { create, isCreating } = useCreate(account);
 
-  const createStake = useCallback(async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const { name, merchant, stake } = event.target as Element & {
-      [key: string]: HTMLInputElement;
-    };
-    const keys = details.guard.keys;
-    await create({
-      name: name.value,
-      keys,
-      merchant: merchant.value,
-      stake: parseFloat(stake.value),
-    });
-  }, []);
+  const createStake = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const { name, merchant, stake } = event.target as Element & {
+        [key: string]: HTMLInputElement;
+      };
+      const keys = details.guard.keys;
+      await create({
+        name: name.value,
+        keys,
+        merchant: merchant.value,
+        stake: parseFloat(stake.value),
+      });
+    },
+    [account, details]
+  );
   return (
     <>
       <Head>

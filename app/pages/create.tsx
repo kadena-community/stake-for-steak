@@ -2,34 +2,38 @@ import Head from "next/head";
 import styles from "../styles/Home.module.css";
 import { Pact, signWithChainweaver } from "@kadena/client";
 import { FormEvent, useCallback } from "react";
+import { useAccount } from "../hooks/use-account";
+import { useDetails } from "../hooks/use-details";
 
 export default function Home() {
+  const { account } = useAccount();
+  const { details } = useDetails(account);
   const createStake = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const { name, merchant, owner, keys, stake } = event.target as Element & {
+    const { name, merchant, stake } = event.target as Element & {
       [key: string]: HTMLInputElement;
     };
-    const pubkeys = keys.value.split(",").map((key) => key.trim());
+    const keys = details.guard.keys;
     const command = (Pact.modules as any)["free.stake-for-steak"]
       ["create-stake"](
         name.value,
         merchant.value,
-        owner.value,
+        account,
         () => `(read-keyset 'keyset)`,
         parseFloat(stake.value)
       )
       .addData({
-        keyset: { pred: "keys-all", keys: keys.value.split(",") },
+        keyset: { pred: "keys-all", keys },
       })
-      .addCap("coin.GAS" as any, pubkeys[0])
+      .addCap("coin.GAS" as any, keys[0])
       .addCap(
         "coin.TRANSFER" as any,
-        pubkeys[0],
-        owner.value,
-        `${owner.value}-${name.value}`,
+        keys[0],
+        account,
+        `${account}-${name.value}`,
         parseFloat(stake.value)
       )
-      .setMeta({ sender: owner.value }, "testnet04");
+      .setMeta({ sender: account }, "testnet04");
 
     await signWithChainweaver(command);
 
@@ -41,7 +45,7 @@ export default function Home() {
     console.log(res);
   }, []);
   return (
-    <div className={styles.container}>
+    <>
       <Head>
         <title>Stake for steak</title>
         <meta name="description" content="Stake for stake" />
@@ -49,36 +53,48 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <h1 className={styles.title}>Create</h1>
+        <h1 className="text-3xl font-bold text-slate-100 text-center">
+          Create
+        </h1>
 
-        <p className={styles.description}>Create your stake here</p>
+        <p className="text-slate-100 text-center">Create your stake here</p>
 
-        <form onSubmit={createStake} className={styles.grid}>
-          <div className={styles.input}>
-            <label htmlFor="name">Name</label>
-            <input type="text" name="name" id="name" />
+        <form onSubmit={createStake} className="m-4">
+          <div className="text-slate-100 m-2">
+            <label htmlFor="name">Name: </label>
+            <input
+              className="text-slate-700 p-1"
+              type="text"
+              name="name"
+              id="name"
+            />
           </div>
-          <div className={styles.input}>
-            <label htmlFor="merchant">Merchant</label>
-            <input type="text" name="merchant" id="merchant" />
+          <div className="text-slate-100 m-2">
+            <label htmlFor="merchant">Merchant: </label>
+            <input
+              className="text-slate-700 p-1"
+              type="text"
+              name="merchant"
+              id="merchant"
+            />
           </div>
-          <div className={styles.input}>
-            <label htmlFor="owner">Owner</label>
-            <input type="text" name="owner" id="owner" />
+          <div className="text-slate-100 m-2">
+            <label htmlFor="stake">Stake: </label>
+            <input
+              className="text-slate-700 p-1"
+              type="number"
+              name="stake"
+              id="stake"
+            />
           </div>
-          <div className={styles.input}>
-            <label htmlFor="keys">Keys</label>
-            <input type="text" name="keys" id="keys" />
-          </div>
-          <div className={styles.input}>
-            <label htmlFor="stake">Stake</label>
-            <input type="number" name="stake" id="stake" />
-          </div>
-          <div className={styles.input}>
-            <button type="submit" className="button">Create</button>
-          </div>
+          <button
+            type="submit"
+            className="block button rounded-md text-slate-100"
+          >
+            Create
+          </button>
         </form>
       </main>
-    </div>
+    </>
   );
 }

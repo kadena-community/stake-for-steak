@@ -34,7 +34,12 @@ export default function Home() {
         <form onSubmit={addStake} className="m-4">
           <label className="text-slate-100 label" htmlFor="name">
             Name
-            <input type="text" name="name" id="name" />
+            <input
+              className="text-slate-700 p-1"
+              type="text"
+              name="name"
+              id="name"
+            />
           </label>
           <button
             className="block button rounded-md text-slate-100"

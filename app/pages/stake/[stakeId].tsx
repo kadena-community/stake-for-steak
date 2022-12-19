@@ -5,6 +5,7 @@ import { useFund } from "../../hooks/use-fund";
 import { useKeys } from "../../hooks/use-keys";
 import { usePay } from "../../hooks/use-pay";
 import { useStake } from "../../hooks/use-stake";
+import styles from "../../styles/Home.module.css";
 
 export default function StakePage() {
   const router = useRouter();
@@ -34,10 +35,8 @@ export default function StakePage() {
       <div className="font-bold text-slate-100 text-center p-8">loading...</div>
     );
   return (
-    <div>
-      <h2 className="text-3xl font-bold text-slate-100 text-center p-4">
-        {stake.name}
-      </h2>
+    <div className={styles.main}>
+      <h2 className="sweet-title">{stake.name}</h2>
       <p className="text-xl font-bold text-slate-100 text-center">
         KDA: {stake.balance}
       </p>
@@ -47,28 +46,33 @@ export default function StakePage() {
       <p className="font-bold text-slate-100 text-center">
         Stakers: {stake.stakers.join(",")}
       </p>
-      <button
-        className="block p-2 m-2 button rounded-md text-slate-100"
-        onClick={fundStake}
-      >
-        fund
-      </button>
-      <label className="m-2 text-slate-100">
-        amount:
-        <input
-          className="text-slate-700"
-          type="number"
-          name="amount"
-          min="0.000001"
-          onChange={(e: any) => setAmount(e.target.value)}
-        />
-      </label>
-      <button
-        className="block p-2 m-2 button rounded-md text-slate-100"
-        onClick={payStake}
-      >
-        pay
-      </button>
+      <div className="flex flex-col">
+        <label className="m-2 text-slate-100">
+          amount:
+          <input
+            className="text-slate-700"
+            type="number"
+            name="amount"
+            min="0.000001"
+            onChange={(e: any) => setAmount(e.target.value)}
+          />
+        </label>
+        <div className="flex flex-row">
+          <button
+            className="block p-2 m-2 button rounded-md text-slate-100"
+            onClick={fundStake}
+          >
+            fund
+          </button>
+
+          <button
+            className="block p-2 m-2 button rounded-md text-slate-100"
+            onClick={payStake}
+          >
+            pay
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

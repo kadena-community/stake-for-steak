@@ -1,6 +1,5 @@
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
-import { Pact, signWithChainweaver } from "@kadena/client";
 import { FormEvent, useCallback } from "react";
 import { useAccount } from "../hooks/use-account";
 import { useDetails } from "../hooks/use-details";

@@ -4,50 +4,24 @@ import { Pact, signWithChainweaver } from "@kadena/client";
 import styles from "../styles/Home.module.css";
 import { useDetails } from "../hooks/use-details";
 import { useAccount } from "../hooks/use-account";
+import { useWithdraw } from "../hooks/use-withdraw";
 
 export default function Home() {
   const { account } = useAccount();
   const { details } = useDetails(account);
-  const withdraw = useCallback(async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const { name } = event.target as Element & {
-      [key: string]: HTMLInputElement;
-    };
-    const keys = details.guard.keys;
-    const stake = await (Pact.modules as any)["free.stake-for-steak"]
-      ["get-stake"](name.value)
-      .local(
-        "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
-      );
+  const { withdraw, isWithdrawing } = useWithdraw(account);
+  const withdrawFunds = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const { name } = event.target as Element & {
+        [key: string]: HTMLInputElement;
+      };
 
-    const stakeId = await (Pact.modules as any)["free.stake-for-steak"]
-      ["get-stake-id"](name.value, stake.result.data.owner)
-      .local(
-        "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
-      );
-    const command = (Pact.modules as any)["free.stake-for-steak"]
-      ["withdraw"](name.value, account)
-      .addData({
-        keyset: { pred: "keys-all", keys },
-      })
-      .addCap("coin.GAS" as any, keys[0])
-      .addCap("free.stake-for-steak.STAKER", keys[0], name.value, account)
-      .addCap(
-        "coin.TRANSFER" as any,
-        keys[0],
-        stakeId.result.data,
-        account,
-        stake.result.data.stake
-      )
-      .setMeta({ sender: account }, "testnet04");
-
-    await signWithChainweaver(command);
-
-    const res = await command.send(
-      "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
-    );
-    console.log(res);
-  }, []);
+      const keys = details.guard.keys;
+      await withdraw({ name: name.value, keys });
+    },
+    [account, details, withdraw]
+  );
   return (
     <>
       <Head>
@@ -61,7 +35,13 @@ export default function Home() {
 
         <p className="text-slate-100">Withdraw your stake here</p>
 
-        <form onSubmit={withdraw} className="m-4">
+        {isWithdrawing && (
+          <p className="text-xl text-slate-100 font-bold">
+            Please sign in chainweaver...
+          </p>
+        )}
+
+        <form onSubmit={withdrawFunds} className="m-4">
           <div className="text-slate-100 m-2">
             <label htmlFor="name">Name: </label>
             <input

@@ -5,6 +5,7 @@ import { useFund } from "../../hooks/use-fund";
 import { useKeys } from "../../hooks/use-keys";
 import { usePay } from "../../hooks/use-pay";
 import { useStake } from "../../hooks/use-stake";
+import { useWithdraw } from "../../hooks/use-withdraw";
 import styles from "../../styles/Home.module.css";
 
 export default function StakePage() {
@@ -15,6 +16,7 @@ export default function StakePage() {
   const { keys } = useKeys();
   const { fund, isFunding } = useFund(stakeId as string);
   const { pay, isPaying } = usePay(stakeId as string);
+  const { withdraw, isWithdrawing } = useWithdraw(account);
   const [amount, setAmount] = useState(0);
   const fundStake = useCallback(async () => {
     if (!account || !keys?.length) return;
@@ -24,10 +26,17 @@ export default function StakePage() {
     if (!account || !keys?.length) return;
     pay({ staker: account, keys, amount });
   }, [account, keys, amount, pay]);
-  if (isFunding || isPaying)
+  const withdrawStake = useCallback(async () => {
+    if (!account || !keys?.length) return;
+    await withdraw({ name: stakeId as string, keys });
+  }, [account, keys, withdraw]);
+  if (isFunding || isPaying || isWithdrawing)
     return (
-      <div className="font-bold text-slate-100 text-center p-8">
-        Please sign in Chainweaver...
+      <div className={styles.main}>
+        <h2 className="sweet-title">{stake.name}</h2>
+        <div className="font-bold text-slate-100 text-center p-8">
+          Please sign in Chainweaver...
+        </div>
       </div>
     );
   if (isLoading)
@@ -47,7 +56,7 @@ export default function StakePage() {
         Stakers: {stake.stakers.join(",")}
       </p>
       <div className="flex flex-col">
-        <label className="m-2 text-slate-100">
+        <label className="m-2 text-slate-100 text-center">
           amount:
           <input
             className="text-slate-700"
@@ -57,7 +66,7 @@ export default function StakePage() {
             onChange={(e: any) => setAmount(e.target.value)}
           />
         </label>
-        <div className="flex flex-row">
+        <div className="grid grid-cols-2">
           <button
             className="block p-2 m-2 button rounded-md text-slate-100"
             onClick={fundStake}
@@ -70,6 +79,13 @@ export default function StakePage() {
             onClick={payStake}
           >
             pay
+          </button>
+
+          <button
+            className="block p-2 m-2 button rounded-md text-slate-100"
+            onClick={withdrawStake}
+          >
+            withdraw
           </button>
         </div>
       </div>

@@ -4,45 +4,25 @@ import { Pact, signWithChainweaver } from "@kadena/client";
 import { FormEvent, useCallback } from "react";
 import { useAccount } from "../hooks/use-account";
 import { useDetails } from "../hooks/use-details";
+import { useCreate } from "../hooks/use-create";
 
 export default function Home() {
   const { account } = useAccount();
   const { details } = useDetails(account);
+  const { create, isCreating } = useCreate(account);
+
   const createStake = useCallback(async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const { name, merchant, stake } = event.target as Element & {
       [key: string]: HTMLInputElement;
     };
     const keys = details.guard.keys;
-    const command = (Pact.modules as any)["free.stake-for-steak"]
-      ["create-stake"](
-        name.value,
-        merchant.value,
-        account,
-        () => `(read-keyset 'keyset)`,
-        parseFloat(stake.value)
-      )
-      .addData({
-        keyset: { pred: "keys-all", keys },
-      })
-      .addCap("coin.GAS" as any, keys[0])
-      .addCap(
-        "coin.TRANSFER" as any,
-        keys[0],
-        account,
-        `${account}-${name.value}`,
-        parseFloat(stake.value)
-      )
-      .setMeta({ sender: account }, "testnet04");
-
-    await signWithChainweaver(command);
-
-    console.log(command);
-
-    const res = await command.send(
-      "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
-    );
-    console.log(res);
+    await create({
+      name: name.value,
+      keys,
+      merchant: merchant.value,
+      stake: parseFloat(stake.value),
+    });
   }, []);
   return (
     <>
@@ -59,6 +39,11 @@ export default function Home() {
 
         <p className="text-slate-100 text-center">Create your stake here</p>
 
+        {isCreating && (
+          <p className="text-xl text-slate-100 font-bold">
+            Please sign in chainweaver...
+          </p>
+        )}
         <form onSubmit={createStake} className="m-4">
           <div className="text-slate-100 m-2">
             <label htmlFor="name">Name: </label>

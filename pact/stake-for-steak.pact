@@ -201,12 +201,17 @@
               (install-refund-capabilities stake-escrow stakers stake)
               (refund-stake name initiator)))))))
 
+  (defun strip-namespace:string (name:string)
+    (let ((part:string (take 2 name)))
+          (if (= "k:" part)
+            (drop 2 name)
+            name)))
 
   (defun get-stake-id:string (stake:string staker:string)
     @doc "Form a stake id based on the staker and stake name"
     (enforce (!= stake "") "Stake must not be empty")
     (enforce (!= staker "") "Staker must not be empty")
-    (format "{}-{}" [staker stake]))
+    (format "{}-{}" [(strip-namespace staker) stake]))
 
   (defun get-staker(name:string staker:string)
     @doc "Retrieve staker information"

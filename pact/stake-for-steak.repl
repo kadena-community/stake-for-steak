@@ -62,7 +62,7 @@
 (env-sigs [{
   "key": "stake-owner-public-key",
   "caps": [
-    (coin.TRANSFER "stake-owner" "stake-owner-tulsi-stake" 50.0)
+    (coin.TRANSFER "stake-owner" (free.stake-for-steak.get-escrow-id "tulsi-stake" "stake-owner") 50.0)
   ]
 }])
 (begin-tx)
@@ -79,7 +79,7 @@
 (expect
   "Stake escrow to have 50.0 coins"
   50.0
-  (coin.get-balance "stake-owner-tulsi-stake"))
+  (coin.get-balance (free.stake-for-steak.get-escrow-id "tulsi-stake" "stake-owner")))
 (commit-tx)
 (env-data {})
 (env-sigs [])
@@ -88,14 +88,14 @@
 (env-sigs [{
   "key": "stake-owner-public-key",
   "caps": [
-    (coin.TRANSFER "stake-owner-tulsi-stake" "stake-owner" 50.0)
+    (coin.TRANSFER (free.stake-for-steak.get-escrow-id "tulsi-stake" "stake-owner") "stake-owner" 50.0)
   ]
 }])
 (begin-tx)
 (expect-failure
   "Stake escrow account can't be plundered by the owner"
   "require-capability: not granted"
-  (coin.transfer "stake-owner-tulsi-stake" "stake-owner" 50.0))
+  (coin.transfer (free.stake-for-steak.get-escrow-id "tulsi-stake" "stake-owner") "stake-owner" 50.0))
 (commit-tx)
 (env-sigs [])
 (env-data {})
@@ -112,7 +112,7 @@
 (env-sigs [{
   "key": "staker-public-key",
   "caps": [
-    (coin.TRANSFER "staker" "stake-owner-tulsi-stake" 50.0)
+    (coin.TRANSFER "staker" (free.stake-for-steak.get-escrow-id "tulsi-stake" "stake-owner") 50.0)
   ]
 }])
 (begin-tx)
@@ -129,7 +129,7 @@
 (expect
   "Stake escrow to have 100.0 coins"
   100.0
-  (coin.get-balance "stake-owner-tulsi-stake"))
+  (coin.get-balance (free.stake-for-steak.get-escrow-id "tulsi-stake" "stake-owner")))
 (commit-tx)
 (env-data {})
 (env-sigs [])
@@ -147,7 +147,7 @@
 (env-sigs [{
   "key": "stake-owner-public-key",
   "caps": [
-    (coin.TRANSFER "stake-owner-tulsi-stake" "tulsi-account" 75.0)
+    (coin.TRANSFER (free.stake-for-steak.get-escrow-id "tulsi-stake" "stake-owner") "tulsi-account" 75.0)
     (free.stake-for-steak.STAKER "tulsi-stake" "stake-owner")
   ]
 }])
@@ -171,7 +171,7 @@
 (env-sigs [{
   "key": "staker-public-key",
   "caps": [
-    (coin.TRANSFER "staker" "stake-owner-tulsi-stake" 50.0)
+    (coin.TRANSFER "staker" (free.stake-for-steak.get-escrow-id "tulsi-stake" "stake-owner") 50.0)
   ]
 }])
 (begin-tx)
@@ -192,7 +192,7 @@
 (env-sigs [{
   "key": "stake-owner-public-key",
   "caps": [
-    (coin.TRANSFER "stake-owner" "stake-owner-refund-stake" 50.0)
+    (coin.TRANSFER "stake-owner" (free.stake-for-steak.get-escrow-id "refund-stake" "stake-owner") 50.0)
   ]
 }])
 (begin-tx)
@@ -213,7 +213,7 @@
 (env-sigs [{
   "key": "staker-public-key",
   "caps": [
-    (coin.TRANSFER "staker" "stake-owner-refund-stake" 50.0)
+    (coin.TRANSFER "staker" (free.stake-for-steak.get-escrow-id "refund-stake" "stake-owner") 50.0)
   ]
 }])
 (begin-tx)
@@ -226,8 +226,8 @@
 (env-sigs [{
   "key": "stake-owner-public-key",
   "caps": [
-    (coin.TRANSFER "stake-owner-refund-stake" "stake-owner" 50.0)
-    (coin.TRANSFER "stake-owner-refund-stake" "staker" 50.0)
+    (coin.TRANSFER (free.stake-for-steak.get-escrow-id "refund-stake" "stake-owner") "stake-owner" 50.0)
+    (coin.TRANSFER (free.stake-for-steak.get-escrow-id "refund-stake" "stake-owner") "staker" 50.0)
     (free.stake-for-steak.STAKER "refund-stake" "stake-owner")
   ]
 }])
@@ -249,7 +249,7 @@
 (env-sigs [{
   "key": "stake-owner-public-key",
   "caps": [
-    (coin.TRANSFER "stake-owner" "stake-owner-withdraw-stake" 50.0)
+    (coin.TRANSFER "stake-owner" (free.stake-for-steak.get-escrow-id "withdraw-stake" "stake-owner") 50.0)
   ]
 }])
 (begin-tx)
@@ -261,7 +261,7 @@
 (env-sigs [{
   "key": "stake-owner-public-key",
   "caps": [
-    (coin.TRANSFER "stake-owner-withdraw-stake" "stake-owner" 50.0)
+    (coin.TRANSFER (free.stake-for-steak.get-escrow-id "withdraw-stake" "stake-owner") "stake-owner" 50.0)
     (free.stake-for-steak.STAKER "withdraw-stake" "stake-owner")
   ]
 }])

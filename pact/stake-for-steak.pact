@@ -83,6 +83,10 @@
     @doc "Create a guard for the stake"
     (create-user-guard (stake-guard name staker)))
 
+  (defun get-escrow-id:string (name:string staker:string)
+    @doc "Get the escrow id for the staker"
+    (create-principal (create-stake-guard name staker)))
+
   (defun create-stake(name:string
                       merchant:string
                       owner:string
@@ -100,7 +104,7 @@
     (enforce (!= name "") "Name must not be empty")
     (enforce (!= merchant "") "Merchant must not be empty")
 
-    (let ((stake-escrow:string (get-stake-id name owner)))
+    (let ((stake-escrow:string (get-escrow-id name owner)))
       (coin.create-account stake-escrow (create-stake-guard name owner))
       (insert stake-table name
         { "merchant"    : merchant
@@ -151,7 +155,7 @@
         , "stake"       := stake
         , "stakers"     := stakers
         , "balance"     := balance }
-        (let ((stake-escrow:string (get-stake-id name owner)))
+        (let ((stake-escrow:string (get-escrow-id name owner)))
           (coin.transfer staker stake-escrow stake)
           (update stake-table name
             { "balance" : (+ balance stake)
@@ -189,7 +193,7 @@
         , "stake"       := stake
         , "balance"     := balance }
         (enforce (>= balance amount) "Not enough balance")
-        (let ((stake-escrow:string (get-stake-id name owner)))
+        (let ((stake-escrow:string (get-escrow-id name owner)))
           (with-read stakers-table (get-stake-id name initiator)
             { "amount" := staker-amount
             , "guard"  := staker-guard }
@@ -293,7 +297,7 @@
           , "stakers"         := stakers
           , "stake"           := stake
           , "balance"         := balance }
-          (let ((escrow-id (get-stake-id name owner))
+          (let ((escrow-id (get-escrow-id name owner))
                 (refund (get-refund balance (length stakers))))
             (map
               (refund-staker name escrow-id refund)
@@ -319,7 +323,7 @@
           { "balance" := balance
           , "stakers" := stakers
           , "owner"   := owner }
-          (let ((stake-escrow:string (get-stake-id name owner))
+          (let ((stake-escrow:string (get-escrow-id name owner))
                 (left-over:decimal (get-left-over name)))
             (coin.transfer stake-escrow staker left-over)
             (withdraw-stake name staker)

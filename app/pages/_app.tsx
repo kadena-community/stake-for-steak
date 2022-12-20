@@ -7,8 +7,6 @@ import { useModal } from "../hooks/use-modal";
 
 export default function App({ Component, pageProps }: AppProps) {
   const modal = useModal();
-  console.log("modal", modal);
-
   return (
     <div className="h-screen bg-slate-800 kadena-bg">
       <ConsentModalContext.Provider value={modal}>

@@ -1,5 +1,6 @@
 import useSWRMutation from "swr/mutation";
 import { Pact, signWithChainweaver } from "@kadena/client";
+import { getEscrowId } from "../utils/get-escrow-id";
 
 interface FundInput {
   staker: string;
@@ -13,11 +14,7 @@ const fundStake = async (name: string, { arg }: { arg: FundInput }) => {
       "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
     );
 
-  const stakeId = await (Pact.modules as any)["free.stake-for-steak"]
-    ["get-stake-id"](name, stake.result.data.owner)
-    .local(
-      "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
-    );
+  const escrowId = await getEscrowId(name, stake.result.data.owner);
 
   const command = (Pact.modules as any)["free.stake-for-steak"]
     ["fund-stake"](name, staker, () => `(read-keyset 'keyset)`)
@@ -29,7 +26,7 @@ const fundStake = async (name: string, { arg }: { arg: FundInput }) => {
       "coin.TRANSFER" as any,
       keys[0],
       staker,
-      stakeId.result.data,
+      escrowId,
       stake.result.data.stake
     )
     .setMeta({ sender: staker }, "testnet04");

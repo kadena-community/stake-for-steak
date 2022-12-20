@@ -4,11 +4,15 @@ import { FormEvent, useCallback } from "react";
 import { useAccount } from "../hooks/use-account";
 import { useDetails } from "../hooks/use-details";
 import { useCreate } from "../hooks/use-create";
+import { useRouter } from "next/router";
+import { useStakes } from "../hooks/use-stakes";
 
 export default function Home() {
   const { account } = useAccount();
   const { details } = useDetails(account);
   const { create, isCreating } = useCreate(account);
+  const { stakes, setStakes } = useStakes();
+  const router = useRouter();
 
   const createStake = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -23,6 +27,8 @@ export default function Home() {
         merchant: merchant.value,
         stake: parseFloat(stake.value),
       });
+      setStakes([...stakes, name.value]);
+      router.push(`/stake/${name.value}`);
     },
     [account, details]
   );

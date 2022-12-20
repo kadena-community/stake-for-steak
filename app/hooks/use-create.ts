@@ -1,5 +1,6 @@
 import useSWRMutation from "swr/mutation";
 import { Pact, signWithChainweaver } from "@kadena/client";
+import { getEscrowId } from "../utils/get-escrow-id";
 
 interface CreateInput {
   name: string;
@@ -9,6 +10,8 @@ interface CreateInput {
 }
 const pay = async (owner: string, { arg }: { arg: CreateInput }) => {
   const { merchant, name, keys, stake } = arg;
+  const escrowId = await getEscrowId(name, owner);
+
   const command = (Pact.modules as any)["free.stake-for-steak"]
     ["create-stake"](
       name,
@@ -21,17 +24,15 @@ const pay = async (owner: string, { arg }: { arg: CreateInput }) => {
       keyset: { pred: "keys-all", keys },
     })
     .addCap("coin.GAS" as any, keys[0])
-    .addCap("coin.TRANSFER" as any, keys[0], owner, `${owner}-${name}`, stake)
+    .addCap("coin.TRANSFER" as any, keys[0], owner, escrowId, stake)
     .setMeta({ sender: owner }, "testnet04");
 
   await signWithChainweaver(command);
 
-  console.log(command);
-
   const res = await command.send(
     "https://api.testnet.chainweb.com/chainweb/0.0/testnet04/chain/1/pact"
   );
-  console.log(res);
+  return res;
 };
 
 export function useCreate(owner: string | undefined | null) {
